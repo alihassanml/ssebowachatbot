@@ -44,7 +44,7 @@ const Chatbot = ({ url }) => {
           <Button
             className="position-fixed"
             style={{
-              bottom: "15px",
+              bottom: "25px",
               right: "20px",
               borderRadius: "10px",
               width: "140px",
@@ -73,7 +73,7 @@ const Chatbot = ({ url }) => {
             <div  className="p-0"
             style={{
                 position: "fixed",
-                bottom: "70px",
+                bottom: "75px",
                 right: "20px",
                 backgroundColor: "gray",
                 minWidth: "360px",
@@ -103,7 +103,7 @@ const Chatbot = ({ url }) => {
               }}
             /></Col>
               <Col style={{ margin: 0, padding: 0, flex: "0 0 60%"}} className="pt-2">
-              <h1 className="" style={{fontSize:"28px",fontWeight:"bold"}} >{projectData.chatbot_name}</h1>
+              <h1 className="mt-1" style={{fontSize:"28px",fontWeight:"bold"}} >{projectData.chatbot_name}</h1>
               <h6 style={{fontSize:"15px"}}>{projectData.description}</h6>
               </Col>
               <Col  style={{ margin: 0, padding: 0, flex: "0 0 15%" }} className="d-flex">
@@ -116,7 +116,7 @@ const Chatbot = ({ url }) => {
             <div
             style={{
                 position: "fixed",
-                bottom: "90px",
+                bottom: "95px",
                 right: "20px",
                 backgroundColor: `${projectData.color}`,
                 minWidth: "400px",
