@@ -1,0 +1,17 @@
+*{
+    margin: 0;
+    padding: 0;
+    color: white;
+    font-family: sans-serif;
+    list-style: none;
+}
+
+.chatbot-logo-image {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+  }
+.chatbot-1st-header{
+    min-height: 100px;
+    background-color: black;
+}
