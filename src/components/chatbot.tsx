@@ -1,4 +1,4 @@
-import { useEffect, useState,useRef } from "react";
+import { useEffect, useState, useRef } from "react";
 import Container from "react-bootstrap/Container";
 import "bootstrap/dist/css/bootstrap.min.css";
 import axios from "axios";
@@ -15,6 +15,8 @@ const Chatbot = ({ url }) => {
   const [userInput, setUserInput] = useState("");
   const [messages, setMessages] = useState([]);
 
+  const [Contactmode, setContactmode] = useState(false);
+  const [Chatmode, setChatmode] = useState(true);
 
   const fetchProjectData = async () => {
     try {
@@ -32,7 +34,6 @@ const Chatbot = ({ url }) => {
       console.error("Error fetching project data:", error);
     }
   };
-
 
   const handleSendMessage = async () => {
     if (!userInput) return;
@@ -60,10 +61,69 @@ const Chatbot = ({ url }) => {
 
       const answer = response.data.answer;
 
-      // Add chatbot response after a delay to simulate typing
-      setTimeout(() => {
+      if (response.data.answer === "False") {
+        setMessages((prev) => [
+          ...prev,
+          {
+            type: "chatbot",
+            component: (
+              <>
+                <div
+                  style={{ textAlign: "left", marginTop: "10px" }}
+                  className="left-resonse "
+                >
+                  <p
+                    style={{
+                      fontSize: "14px",
+                      color: "black",
+                      fontWeight: "lighter",
+                    }}
+                  >
+                    Something went wrong. Do you want to connect with the admin?
+                  </p>
+                </div>
+
+                <button
+                  style={{
+                    margin: "5px",
+                    padding: "5px 10px",
+                    backgroundColor: `${projectData.color}`,
+                    border: "none",
+                    borderRadius: "5px",
+                    cursor: "pointer",
+                  }}
+                  onClick={() => {
+                    alert("yes");
+                    setChatmode(false);
+                    setContactmode(true);
+                  }}
+                >
+                  Yes
+                </button>
+                <button
+                  style={{
+                    margin: "5px",
+                    padding: "5px 10px",
+                    backgroundColor: `${projectData.color}`,
+                    border: "none",
+                    borderRadius: "5px",
+                    cursor: "pointer",
+                  }}
+                  onClick={() => {
+                    // setChatmode(true);
+                    //  setContactmode(false);
+                    alert("no");
+                  }}
+                >
+                  No
+                </button>
+              </>
+            ),
+          },
+        ]);
+      } else {
         setMessages((prev) => [...prev, { type: "chatbot", text: answer }]);
-      }, 1000);
+      }
     } catch (error) {
       console.error(
         "Error sending message to chatbot:",
@@ -74,11 +134,8 @@ const Chatbot = ({ url }) => {
         { type: "chatbot", text: "Error: Unable to get a response." },
       ]);
     }
-
     setUserInput("");
   };
-
-
 
   useEffect(() => {
     if (url) {
@@ -89,7 +146,6 @@ const Chatbot = ({ url }) => {
   const toggleChatbot = () => {
     setShowChatbot((prev) => !prev);
   };
-
 
   const capitalizeFirstLetter = (string) => {
     return string.charAt(0).toUpperCase() + string.slice(1);
@@ -104,8 +160,7 @@ const Chatbot = ({ url }) => {
 
   return (
     <>
-      <Container className="" fluid style={{backgroundColor:"transparent"}}>
-        
+      <Container className="" fluid style={{ backgroundColor: "transparent" }}>
         {projectData && (
           <Button
             className="position-fixed"
@@ -135,8 +190,12 @@ const Chatbot = ({ url }) => {
           </Button>
         )}
 
-        {projectData &&
-          (showChatbot ? (
+        
+          {projectData &&
+            (showChatbot ?
+              (Chatmode ?(
+            
+
             <div
               className="p-0"
               style={{
@@ -188,7 +247,7 @@ const Chatbot = ({ url }) => {
                 >
                   <h1
                     className="mt-1"
-                    style={{ fontSize: "28px", fontWeight: "bold" }}
+                    style={{ fontSize: "25px", fontWeight: "bold" }}
                   >
                     {capitalizeFirstLetter(projectData.chatbot_name)}
                   </h1>
@@ -210,41 +269,43 @@ const Chatbot = ({ url }) => {
               </header>
 
               <div className="bg-info chatbot-mid-scroll p-2" ref={chatBoxRef}>
-              {messages.map((message, index) => (
-                    <div
-                      key={index}
-                      className={
-                        message.type === "user"
-                          ? "user-message"
-                          : "chatbot-message"
-                      }
-                      style={{
-                        textAlign: message.type === "user" ? "right" : "left",
-                        margin: "5px 0",
-                      }}
-                    >
-                      <strong>
-                        {message.type === "user" ? (
-                          <button
-                            className="left-resonse"
-                            style={{
-                              backgroundColor: projectData.color,
-                              color: "auto",
-                            }}
-                          >
-                            {capitalizeFirstLetter(message.text)}
-                          </button>
-                        ) : (
-                          <button
-                            className="left-resonse"
-                            style={{ color: "black" }}
-                          >
-                            {capitalizeFirstLetter(message.text)}
-                          </button>
-                        )}
-                      </strong>
-                    </div>
-                  ))}
+                {messages.map((message, index) => (
+                  <div
+                    key={index}
+                    className={
+                      message.type === "user"
+                        ? "user-message"
+                        : "chatbot-message"
+                    }
+                    style={{
+                      textAlign: message.type === "user" ? "right" : "left",
+                      margin: "5px 0",
+                    }}
+                  >
+                    <strong>
+                      {message.type === "user" ? (
+                        <button
+                          className="left-resonse"
+                          style={{
+                            backgroundColor: projectData.color,
+                            color: "auto",
+                          }}
+                        >
+                          {capitalizeFirstLetter(message.text)}
+                        </button>
+                      ) : message.component ? (
+                        message.component
+                      ) : (
+                        <button
+                          className="left-resonse"
+                          style={{ color: "black" }}
+                        >
+                          {capitalizeFirstLetter(message.text)}
+                        </button>
+                      )}
+                    </strong>
+                  </div>
+                ))}
               </div>
 
               <div className="chatbot-footer bg-primary">
@@ -255,10 +316,8 @@ const Chatbot = ({ url }) => {
                     aria-describedby="basic-addon2"
                     value={userInput}
                     onChange={(e) => setUserInput(e.target.value)}
-                    
                     onKeyPress={(e) => {
                       if (e.key === "Enter") handleSendMessage();
-                      
                     }}
                     className="chatbot-text-input"
                     style={{
@@ -275,7 +334,6 @@ const Chatbot = ({ url }) => {
                     }}
                   />
                   <InputGroup.Text
-                  
                     id="basic-addon2"
                     onClick={handleSendMessage}
                     className="chatbot-send-buttom no-resize"
@@ -314,8 +372,84 @@ const Chatbot = ({ url }) => {
                 </center>
               </div>
             </div>
-          ) : (
-            (welcomeshow ? (
+           ): Contactmode ?(
+            <div
+              className="p-0"
+              style={{
+                position: "fixed",
+                bottom: "75px",
+                right: "20px",
+                backgroundColor: "pink",
+                minWidth: "360px",
+                maxWidth: "360px",
+                minHeight: "530px",
+                borderRadius: "10px",
+                boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
+                padding: "20px",
+                overflowY: "auto",
+              }} >
+                <header
+                className="chatbot-1st-header d-flex "
+                style={{ backgroundColor: `${projectData.color}` }}
+              >
+                <Col
+                  style={{
+                    margin: 0,
+                    padding: "0",
+                    flex: "0 0 25%",
+                    textAlign: "center",
+                    alignItems: "center",
+                  }}
+                >
+                  <Image
+                    src={projectData.logo_name}
+                    alt={`${projectData.chatbot_name} logo`}
+                    className="mt-3"
+                    style={{
+                      width: "60px",
+                      height: "60px",
+                      borderRadius: "50%",
+                      marginRight: "5px",
+                    }}
+                  />
+                </Col>
+                <Col
+                  style={{ margin: 0, padding: 0, flex: "0 0 60%" }}
+                  className="pt-2"
+                >
+                  <h1
+                    className="mt-2"
+                    style={{ fontSize: "25px", fontWeight: "bold" }}
+                  >
+                    {capitalizeFirstLetter(projectData.chatbot_name)}
+                  </h1>
+                  <p>online</p>
+                  
+                </Col>
+                <Col
+                  style={{ margin: 0, padding: 0, flex: "0 0 15%" }}
+                  className="d-flex"
+                >
+                  <h3 className="mt-2" onClick={() => {
+                  setChatmode(true);
+                   setContactmode(false);
+                  alert("no");
+                }}>
+                    <i
+                      className="fa-solid fa-minus"
+                      style={{ cursor: "pointer" }}
+                    ></i>
+                  </h3>
+                </Col>
+              </header>
+
+
+                
+            </div>
+
+          ): (
+            <div>No mode enabled.</div>
+          )):welcomeshow ? (
             <div
               style={{
                 position: "fixed",
@@ -330,7 +464,7 @@ const Chatbot = ({ url }) => {
                 boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
                 paddingLeft: "20px",
                 paddingRight: "20px",
-                paddingTop: "15px",
+                // paddingTop: "15px",
                 overflowY: "auto",
                 opacity: 1,
                 transform: showChatbot ? "translateY(0)" : "translateY(20px)", // Slide in/out effect
@@ -338,44 +472,47 @@ const Chatbot = ({ url }) => {
                 // display:`${welcomeshow ? "":"none"}`
               }}
             >
-            
-              <div style={{display:"flex"}}>
-              <h4 style={{
-                fontSize:"25px",
-                fontWeight:"bold",
-              }}>{capitalizeFirstLetter(projectData.chatbot_name)}</h4>
-              <h3 className="" onClick={() => setwelcomeshow(false)} style={{
-                right:"14px",
-                position:"fixed"
-              }}>
-                    <i
-                      className="fa-solid fa-minus"
-                      style={{ cursor: "pointer" }}
-                    ></i>
-                  </h3>
-
-                    </div>
-              <p style={{
-                fontSize:"15px"
-              }}>{projectData.welcome_message}</p>
-          
-            </div>
-              ):(
-                <div
+              <div style={{ display: "flex" }}>
+                <h3
+                  className=""
+                  onClick={() => setwelcomeshow(false)}
+                  style={{
+                    right: "14px",
+                    position: "fixed",
+                  }}
+                >
+                  <i
+                    className="fa-solid fa-minus"
+                    style={{ cursor: "pointer" }}
+                  ></i>
+                </h3>
+              </div>
+              <p
                 style={{
-                  position: "fixed",
-                  bottom: "95px",
-                  right: "20px",
-                  overflowY: "auto",
-                  opacity: 1,
-                  transform: showChatbot ? "translateY(0)" : "translateY(20px)", // Slide in/out effect
-                  transition: "opacity 0.5s ease, transform 0.5s ease", // Transition properties
-                  // display:`${welcomeshow ? "":"none"}`
+                  fontSize: "15px",
+                  paddingTop: "8%",
                 }}
-              ></div>
-              ))
-            
+                className=""
+              >
+                {projectData.welcome_message}
+              </p>
+            </div>
+          ) : (
+            <div
+              style={{
+                position: "fixed",
+                bottom: "95px",
+                right: "20px",
+                overflowY: "auto",
+                opacity: 1,
+                transform: showChatbot ? "translateY(0)" : "translateY(20px)", // Slide in/out effect
+                transition: "opacity 0.5s ease, transform 0.5s ease", // Transition properties
+                // display:`${welcomeshow ? "":"none"}`
+              }}
+            ></div>
           ))}
+
+          
       </Container>
     </>
   );

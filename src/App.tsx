@@ -4,7 +4,7 @@ import Chatbot from "./components/chatbot";
 
 const App: React.FC = () => {
   const currentUrl = window.location.href;
-  const url_id = currentUrl.split('http://localhost:5173/')[1]
+  const url_id = currentUrl.split('/').at(-1)
   return (
     
     <Router>
