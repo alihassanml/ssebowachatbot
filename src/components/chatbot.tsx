@@ -13,10 +13,28 @@ const Chatbot = ({ url }) => {
   const [showChatbot, setShowChatbot] = useState(false);
   const [welcomeshow, setwelcomeshow] = useState(true);
   const [userInput, setUserInput] = useState("");
+
+  const [contactInput, setContactInput] = useState("");
+  const [contactmessages, setContactmessages] = useState([]);
   const [messages, setMessages] = useState([]);
 
   const [Contactmode, setContactmode] = useState(false);
   const [Chatmode, setChatmode] = useState(true);
+  const [adminEmail, setAdminEmail] = useState('');
+  const [currentPrompt, setCurrentPrompt] = useState("name"); 
+
+  const [userData, setUserData] = useState(() => {
+    const storedData = JSON.parse(localStorage.getItem("userData"));
+    return storedData || { name: "", email: "", message: "" };
+  });
+
+  const inputRef = useRef(null);
+  
+  
+
+  // getting information of messag
+ 
+  // display current prompot of what he ask 
 
   const fetchProjectData = async () => {
     try {
@@ -27,6 +45,7 @@ const Chatbot = ({ url }) => {
       if (response.status === 200) {
         setProjectData(response.data);
         console.log(response.data);
+        setAdminEmail(response.data.email)
       } else {
         console.error("Failed to fetch project data:", response);
       }
@@ -34,6 +53,33 @@ const Chatbot = ({ url }) => {
       console.error("Error fetching project data:", error);
     }
   };
+
+
+  const switchContactMode = () => {
+    alert("Switching to Contact Mode...");
+    setChatmode(false);
+    setContactmode(true);
+  
+    if (!userData.name || !userData.email) {
+      if (contactmessages.length === 0) { // Add messages only once
+        setContactmessages([
+          { type: "system", text: "Please provide your contact information to ensure we can reconnect in case of disconnection." },
+          { type: "system", text: "What is your name?" },
+        ]);
+      }
+      setCurrentPrompt("name");
+    } else {
+      setContactmessages((prev) => [
+        ...prev,
+        { type: "system", text: "Welcome back! We already have your contact information." },
+      ]);
+    }
+  };
+  
+  
+  
+
+
 
   const handleSendMessage = async () => {
     if (!userInput) return;
@@ -61,7 +107,7 @@ const Chatbot = ({ url }) => {
 
       const answer = response.data.answer;
 
-      if (response.data.answer === "False") {
+      if (response.data.answer.toLowerCase().includes("false") || response.data.answer.toLowerCase().includes("sorry")) {
         setMessages((prev) => [
           ...prev,
           {
@@ -79,7 +125,7 @@ const Chatbot = ({ url }) => {
                       fontWeight: "lighter",
                     }}
                   >
-                    Something went wrong. Do you want to connect with the admin?
+                    {response.data.answer}Something went wrong. Do you want to connect with the admin?
                   </p>
                 </div>
 
@@ -92,11 +138,7 @@ const Chatbot = ({ url }) => {
                     borderRadius: "5px",
                     cursor: "pointer",
                   }}
-                  onClick={() => {
-                    alert("yes");
-                    setChatmode(false);
-                    setContactmode(true);
-                  }}
+                  onClick={switchContactMode}
                 >
                   Yes
                 </button>
@@ -110,8 +152,8 @@ const Chatbot = ({ url }) => {
                     cursor: "pointer",
                   }}
                   onClick={() => {
-                    // setChatmode(true);
-                    //  setContactmode(false);
+                    setChatmode(true);
+                     setContactmode(false);
                     alert("no");
                   }}
                 >
@@ -158,6 +200,150 @@ const Chatbot = ({ url }) => {
     }
   }, [messages]);
 
+
+
+
+
+  const sendAdminNotification = async ({ name, user_email, message }) => {
+    
+
+    const url = `https://api.kontactly.ai/notification/?admin_email=${adminEmail}&name=${encodeURIComponent(
+      name
+    )}&user_email=${encodeURIComponent(user_email)}&message=${encodeURIComponent(
+      message
+    )}`;
+
+    try {
+      const response = await fetch(url, { method: "POST" });
+
+      if (response.ok) {
+        console.log("Notification sent successfully!");
+        setContactmessages((prev) => [
+          ...prev,
+          { type: "system", text: "Thank You! Notification sent successfully" },
+        ]);
+      } else {
+        console.error("Failed to send notification.");
+        setContactmessages((prev) => [
+          ...prev,
+          { type: "system", text: "Failed to send notification." },
+        ]);
+      }
+    } catch (error) {
+      console.error("Error sending notification:", error);
+      setContactmessages((prev) => [
+        ...prev,
+        { type: "system", text: "Error sending notification." },
+      ]);
+    }
+  };
+
+
+  const sendLiveRequest = async ({ name, user_email, message }) => {
+    
+
+    const url = `https://api.kontactly.ai/user_connect/?admin_email=${adminEmail}&name=${encodeURIComponent(
+      name
+    )}&user_email=${encodeURIComponent(user_email)}&message=${encodeURIComponent(
+      message
+    )}`;
+
+    try {
+      const response = await fetch(url, { method: "POST" });
+
+      if (response.ok) {
+        console.log("Notification sent successfully!");
+        setContactmessages((prev) => [
+          ...prev,
+          { type: "system", text: "Thank You! Live Request Send Successfully" },
+        ]);
+      } else {
+        console.error("Failed to send notification.");
+        setContactmessages((prev) => [
+          ...prev,
+          { type: "system", text: "Failed to send Live Request." },
+        ]);
+      }
+    } catch (error) {
+      console.error("Error sending Live Request:", error);
+      setContactmessages((prev) => [
+        ...prev,
+        { type: "system", text: "Error sending Live Request." },
+      ]);
+    }
+  };
+
+
+
+
+  const handleContactMessage = () => {
+    inputRef.current.focus();
+    if (!contactInput.trim()) return;
+
+    if (!userData.name || !userData.email) {
+  
+      if (currentPrompt === "name") {
+        setUserData((prev) => ({ ...prev, name: contactInput }));
+        setContactmessages((prev) => [
+          ...prev,
+          { type: "user", text: contactInput },
+          { type: "system", text: "What is your email?" },
+        ]);
+        setCurrentPrompt("email");
+      } else if (currentPrompt === "email") {
+        setUserData((prev) => ({ ...prev, email: contactInput }));
+        setContactmessages((prev) => [
+          ...prev,
+          { type: "user", text: contactInput },
+          { type: "system", text: "Please provide your message." },
+        ]);
+        setCurrentPrompt("message");
+      } else if (currentPrompt === "message") {
+        setUserData((prev) => ({ ...prev, message: contactInput }));
+        setContactmessages((prev) => [
+          ...prev,
+          { type: "user", text: contactInput },
+          { type: "system", text: "Thank you! Your Notification was sent successfully. Please wait for admin approval." },
+        ]);
+        setCurrentPrompt("");
+    
+        sendAdminNotification({
+          name: userData.name,
+          user_email: userData.email,
+          message: contactInput,
+        });
+    
+        sendLiveRequest({
+          name: userData.name,
+          user_email: userData.email,
+          message: contactInput,
+        });
+    
+        // Optionally reset userData here if you want:
+        // setUserData({ name: "", email: "", message: "" });
+      }
+      
+    }else{
+      setContactmessages((prev) => [
+        ...prev,
+        { type: "system", text: "You already have data" },
+      ]);
+    setContactInput('');
+    inputRef.current.focus();
+
+    }
+  
+    setContactInput('');
+    inputRef.current.focus();
+  };
+  
+  
+  
+  const switchChatMode = () => {
+    setChatmode(true);
+    setContactmode(false);
+  };
+  
   return (
     <>
       <Container className="" fluid style={{ backgroundColor: "transparent" }}>
@@ -190,266 +376,382 @@ const Chatbot = ({ url }) => {
           </Button>
         )}
 
-        
-          {projectData &&
-            (showChatbot ?
-              (Chatmode ?(
-            
-
-            <div
-              className="p-0"
-              style={{
-                position: "fixed",
-                bottom: "75px",
-                right: "20px",
-                backgroundColor: "gray",
-                minWidth: "360px",
-                maxWidth: "360px",
-                minHeight: "530px",
-                borderRadius: "10px",
-                boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
-                padding: "20px",
-                overflowY: "auto",
-                opacity: showChatbot ? 1 : 0, // Fade-in/fade-out effect
-                transform: showChatbot ? "translateY(0)" : "translateY(20px)", // Slide in/out effect
-                transition: "opacity 0.5s ease, transform 0.5s ease", // Transition properties
-                margin: 0,
-              }}
-            >
-              <header
-                className="chatbot-1st-header d-flex "
-                style={{ backgroundColor: `${projectData.color}` }}
+        {projectData &&
+          (showChatbot ? (
+            Chatmode ? (
+              <div
+                className="p-0"
+                style={{
+                  position: "fixed",
+                  bottom: "75px",
+                  right: "20px",
+                  backgroundColor: "gray",
+                  minWidth: "360px",
+                  maxWidth: "360px",
+                  minHeight: "530px",
+                  borderRadius: "10px",
+                  boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
+                  padding: "20px",
+                  overflowY: "auto",
+                  opacity: showChatbot ? 1 : 0, // Fade-in/fade-out effect
+                  transform: showChatbot ? "translateY(0)" : "translateY(20px)", // Slide in/out effect
+                  transition: "opacity 0.5s ease, transform 0.5s ease", // Transition properties
+                  margin: 0,
+                }}
               >
-                <Col
-                  style={{
-                    margin: 0,
-                    padding: "0",
-                    flex: "0 0 25%",
-                    textAlign: "center",
-                    alignItems: "center",
-                  }}
+                <header
+                  className="chatbot-1st-header d-flex "
+                  style={{ backgroundColor: `${projectData.color}` }}
                 >
-                  <Image
-                    src={projectData.logo_name}
-                    alt={`${projectData.chatbot_name} logo`}
-                    className="mt-3"
+                  <Col
                     style={{
-                      width: "60px",
-                      height: "60px",
-                      borderRadius: "50%",
-                      marginRight: "5px",
-                    }}
-                  />
-                </Col>
-                <Col
-                  style={{ margin: 0, padding: 0, flex: "0 0 60%" }}
-                  className="pt-2"
-                >
-                  <h1
-                    className="mt-1"
-                    style={{ fontSize: "25px", fontWeight: "bold" }}
-                  >
-                    {capitalizeFirstLetter(projectData.chatbot_name)}
-                  </h1>
-                  <h6 style={{ fontSize: "15px" }}>
-                    {capitalizeFirstLetter(projectData.description)}
-                  </h6>
-                </Col>
-                <Col
-                  style={{ margin: 0, padding: 0, flex: "0 0 15%" }}
-                  className="d-flex"
-                >
-                  <h3 className="mt-2" onClick={toggleChatbot}>
-                    <i
-                      className="fa-solid fa-minus"
-                      style={{ cursor: "pointer" }}
-                    ></i>
-                  </h3>
-                </Col>
-              </header>
-
-              <div className="bg-info chatbot-mid-scroll p-2" ref={chatBoxRef}>
-                {messages.map((message, index) => (
-                  <div
-                    key={index}
-                    className={
-                      message.type === "user"
-                        ? "user-message"
-                        : "chatbot-message"
-                    }
-                    style={{
-                      textAlign: message.type === "user" ? "right" : "left",
-                      margin: "5px 0",
+                      margin: 0,
+                      padding: "0",
+                      flex: "0 0 25%",
+                      textAlign: "center",
+                      alignItems: "center",
                     }}
                   >
-                    <strong>
-                      {message.type === "user" ? (
-                        <button
-                          className="left-resonse"
-                          style={{
-                            backgroundColor: projectData.color,
-                            color: "auto",
-                          }}
-                        >
-                          {capitalizeFirstLetter(message.text)}
-                        </button>
-                      ) : message.component ? (
-                        message.component
-                      ) : (
-                        <button
-                          className="left-resonse"
-                          style={{ color: "black" }}
-                        >
-                          {capitalizeFirstLetter(message.text)}
-                        </button>
-                      )}
-                    </strong>
-                  </div>
-                ))}
-              </div>
-
-              <div className="chatbot-footer bg-primary">
-                <InputGroup className="pt-2 ps-2 pe-2" style={{}}>
-                  <Form.Control
-                    placeholder=""
-                    as="textarea"
-                    aria-describedby="basic-addon2"
-                    value={userInput}
-                    onChange={(e) => setUserInput(e.target.value)}
-                    onKeyPress={(e) => {
-                      if (e.key === "Enter") handleSendMessage();
-                    }}
-                    className="chatbot-text-input"
-                    style={{
-                      minHeight: "50px",
-                      outline: "none",
-                      boxShadow: "0 0 5px transparent",
-                      border: "1px solid black",
-                      borderRight: "none",
-                      paddingTop: "16px",
-                      backgroundColor: "green",
-                      lineHeight: "16px",
-                      paddingBottom: "3px !important",
-                      resize: "none",
-                    }}
-                  />
-                  <InputGroup.Text
-                    id="basic-addon2"
-                    onClick={handleSendMessage}
-                    className="chatbot-send-buttom no-resize"
-                    style={{
-                      border: "1px solid black",
-                      borderLeft: "none",
-                      backgroundColor: "yellow",
-                    }}
-                  >
-                    <i className="fa-solid fa-paper-plane text-black"></i>
-                  </InputGroup.Text>
-                </InputGroup>
-
-                <center>
-                  <p className="text-black pt-1" style={{ fontSize: "13px" }}>
                     <Image
-                      src="logo.png"
-                      alt=""
-                      className=""
+                      src={projectData.logo_name}
+                      alt={`${projectData.chatbot_name} logo`}
+                      className="mt-3"
                       style={{
-                        width: "18px",
-                        height: "18px",
+                        width: "60px",
+                        height: "60px",
                         borderRadius: "50%",
                         marginRight: "5px",
                       }}
                     />
-                    Powerd by{" "}
-                    <a
-                      href="https://kontactly.ai/"
-                      target="__blank"
-                      className="text-black"
-                    >
-                      kontactly.ai
-                    </a>
-                  </p>
-                </center>
-              </div>
-            </div>
-           ): Contactmode ?(
-            <div
-              className="p-0"
-              style={{
-                position: "fixed",
-                bottom: "75px",
-                right: "20px",
-                backgroundColor: "pink",
-                minWidth: "360px",
-                maxWidth: "360px",
-                minHeight: "530px",
-                borderRadius: "10px",
-                boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
-                padding: "20px",
-                overflowY: "auto",
-              }} >
-                <header
-                className="chatbot-1st-header d-flex "
-                style={{ backgroundColor: `${projectData.color}` }}
-              >
-                <Col
-                  style={{
-                    margin: 0,
-                    padding: "0",
-                    flex: "0 0 25%",
-                    textAlign: "center",
-                    alignItems: "center",
-                  }}
-                >
-                  <Image
-                    src={projectData.logo_name}
-                    alt={`${projectData.chatbot_name} logo`}
-                    className="mt-3"
-                    style={{
-                      width: "60px",
-                      height: "60px",
-                      borderRadius: "50%",
-                      marginRight: "5px",
-                    }}
-                  />
-                </Col>
-                <Col
-                  style={{ margin: 0, padding: 0, flex: "0 0 60%" }}
-                  className="pt-2"
-                >
-                  <h1
-                    className="mt-2"
-                    style={{ fontSize: "25px", fontWeight: "bold" }}
+                  </Col>
+                  <Col
+                    style={{ margin: 0, padding: 0, flex: "0 0 60%" }}
+                    className="pt-2"
                   >
-                    {capitalizeFirstLetter(projectData.chatbot_name)}
-                  </h1>
-                  <p>online</p>
-                  
-                </Col>
-                <Col
-                  style={{ margin: 0, padding: 0, flex: "0 0 15%" }}
-                  className="d-flex"
+                    <h1
+                      className="mt-1"
+                      style={{ fontSize: "25px", fontWeight: "bold" }}
+                    >
+                      {capitalizeFirstLetter(projectData.chatbot_name)}
+                    </h1>
+                    <h6 style={{ fontSize: "15px" }}>
+                      {capitalizeFirstLetter(projectData.description)}
+                    </h6>
+                  </Col>
+                  <Col
+                    style={{ margin: 0, padding: 0, flex: "0 0 15%" }}
+                    className="d-flex"
+                  >
+                    <h3 className="mt-2" onClick={toggleChatbot}>
+                      <i
+                        className="fa-solid fa-minus"
+                        style={{ cursor: "pointer" }}
+                      ></i>
+                    </h3>
+                  </Col>
+                </header>
+
+                <div
+                  className="bg-info chatbot-mid-scroll p-2"
+                  ref={chatBoxRef}
                 >
-                  <h3 className="mt-2" onClick={() => {
-                  setChatmode(true);
-                   setContactmode(false);
-                  alert("no");
-                }}>
-                    <i
-                      className="fa-solid fa-minus"
-                      style={{ cursor: "pointer" }}
-                    ></i>
-                  </h3>
-                </Col>
-              </header>
+                  {messages.map((message, index) => (
+                    <div
+                      key={index}
+                      className={
+                        message.type === "user"
+                          ? "user-message"
+                          : "chatbot-message"
+                      }
+                      style={{
+                        textAlign: message.type === "user" ? "right" : "left",
+                        margin: "5px 0",
+                      }}
+                    >
+                      <strong>
+                        {message.type === "user" ? (
+                          <button
+                            className="left-resonse"
+                            style={{
+                              backgroundColor: projectData.color,
+                              color: "auto",
+                            }}
+                          >
+                            {capitalizeFirstLetter(message.text)}
+                          </button>
+                        ) : message.component ? (
+                          message.component
+                        ) : (
+                          <button
+                            className="left-resonse"
+                            style={{ color: "black" }}
+                          >
+                            {capitalizeFirstLetter(message.text)}
+                          </button>
+                        )}
+                      </strong>
+                    </div>
+                  ))}
+                </div>
 
+                <div className="chatbot-footer bg-primary">
+                  <InputGroup className="pt-2 ps-2 pe-2" >
+                    <Form.Control
+                      placeholder=""
+                      as="textarea"
+                      aria-describedby="basic-addon2"
+                      value={userInput}
+                      onChange={(e) => setUserInput(e.target.value)}
+                      onKeyPress={(e) => {
+                        if (e.key === "Enter") handleSendMessage();
+                      }}
+                      className="chatbot-text-input"
+                      style={{
+                        minHeight: "50px",
+                        outline: "none",
+                        boxShadow: "0 0 5px transparent",
+                        border: "1px solid black",
+                        borderRight: "none",
+                        paddingTop: "16px",
+                        backgroundColor: "green",
+                        lineHeight: "16px",
+                        paddingBottom: "3px !important",
+                        resize: "none",
+                      }}
+                    />
+                    <InputGroup.Text
+                      id="basic-addon2"
+                      onClick={handleSendMessage}
+                      className="chatbot-send-buttom no-resize"
+                      style={{
+                        border: "1px solid black",
+                        borderLeft: "none",
+                        backgroundColor: "yellow",
+                      }}
+                    >
+                      <i className="fa-solid fa-paper-plane text-black"></i>
+                    </InputGroup.Text>
+                  </InputGroup>
 
+                  <center>
+                    <p className="text-black pt-1" style={{ fontSize: "13px" }}>
+                      <Image
+                        src="logo.png"
+                        alt=""
+                        className=""
+                        style={{
+                          width: "18px",
+                          height: "18px",
+                          borderRadius: "50%",
+                          marginRight: "5px",
+                        }}
+                      />
+                      Powerd by{" "}
+                      <a
+                        href="https://kontactly.ai/"
+                        target="__blank"
+                        className="text-black"
+                      >
+                        kontactly.ai
+                      </a>
+                    </p>
+                  </center>
+                </div>
+              </div>
+            ) : Contactmode ? (
+              <div
+                className="p-0"
+                style={{
+                  position: "fixed",
+                  bottom: "75px",
+                  right: "20px",
+                  backgroundColor: "pink",
+                  minWidth: "360px",
+                  maxWidth: "360px",
+                  minHeight: "530px",
+                  borderRadius: "10px",
+                  boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
+                  padding: "20px",
+                  overflowY: "auto",
+                  opacity: showChatbot ? 1 : 0, // Fade-in/fade-out effect
+                  transform: showChatbot ? "translateY(0)" : "translateY(20px)", // Slide in/out effect
+                  transition: "opacity 0.5s ease, transform 0.5s ease", // Transition properties
+                  margin: 0,
+                  
+                }}
+              >
+                <header
+                  className="chatbot-1st-header d-flex "
+                  style={{ backgroundColor: `${projectData.color}` }}
+                >
+                  <Col
+                    style={{
+                      margin: 0,
+                      padding: "0",
+                      flex: "0 0 25%",
+                      textAlign: "center",
+                      alignItems: "center",
+                    }}
+                  >
+                    <Image
+                      src={projectData.logo_name}
+                      alt={`${projectData.chatbot_name} logo`}
+                      className="mt-3"
+                      style={{
+                        width: "60px",
+                        height: "60px",
+                        borderRadius: "50%",
+                        marginRight: "5px",
+                      }}
+                    />
+                  </Col>
+                  <Col
+                    style={{ margin: 0, padding: 0, flex: "0 0 60%" }}
+                    className="pt-2"
+                  >
+                    <h1
+                      className="mt-2"
+                      style={{ fontSize: "25px", fontWeight: "bold" }}
+                    >
+                      {capitalizeFirstLetter(projectData.chatbot_name)}
+                    </h1>
+                    <p>online</p>
+                  </Col>
+                  <Col
+                    style={{ margin: 0, padding: 0, flex: "0 0 15%" }}
+                    className="d-flex"
+                  >
+                    <h3
+                      className="mt-2"
+                      onClick={switchChatMode}
+                    >
+                      <i
+                        className="fa-solid fa-minus"
+                        style={{ cursor: "pointer" }}
+                      ></i>
+                    </h3>
+                  </Col>
+                </header>
+
+                {/* mids contact chat */}
                 
-            </div>
+                <div
+                  className="bg-danger chatbot-mid-scroll p-2"
+                  ref={chatBoxRef}
+                >
+                  {contactmessages.map((message, index) => (
+                    <div
+                      key={index}
+                      className={
+                        message.type === "user"
+                          ? "user-message"
+                          : "chatbot-message"
+                      }
+                      style={{
+                        textAlign: message.type === "user" ? "right" : "left",
+                        margin: "5px 0",
+                      }}
+                    >
+                      <strong>
+                        {message.type === "user" ? (
+                          <button
+                            className="left-resonse"
+                            style={{
+                              backgroundColor: projectData.color,
+                              color: "white",
+                            }}
+                          >
+                            {capitalizeFirstLetter(message.text)}
+                          </button>
+                        ) : (
+                          <button
+                            className="left-resonse"
+                            style={{ color: "black" }}
+                          >
+                            {capitalizeFirstLetter(message.text)}
+                          </button>
+                        )}
+                      </strong>
+                    </div>
+                  ))}
+                </div>
 
-          ): (
-            <div>No mode enabled.</div>
-          )):welcomeshow ? (
+                {/* bottom  */}
+                <div className=" bg-primary" style={{
+                  bottom:"0",
+                  position:"fixed",
+                  width:"100%",
+                  maxHeight:"70px",
+                  minHeight:"83px",
+                }}>
+                  <InputGroup className="pt-2 ps-2 pe-2" >
+                    <Form.Control
+                      placeholder=""
+                      as="textarea"
+                      ref={inputRef}
+                      value={contactInput}
+                      onChange={(e) => setContactInput(e.target.value)}
+                      onKeyPress={(e) => {
+                        if (e.key === "Enter" && !e.shiftKey) handleContactMessage();
+                      }}
+                      
+                      className="chatbot-text-input"
+                      style={{
+                        minHeight: "50px",
+                        outline: "none",
+                        boxShadow: "0 0 5px transparent",
+                        border: "1px solid black",
+                        borderRight: "none",
+                        paddingTop: "12px",
+                        backgroundColor: "green",
+                        lineHeight: "17px",
+                        paddingBottom: "3px !important",
+                        resize: "none",
+                      }}
+                    />
+                    <InputGroup.Text
+                      id="basic-addon2"
+                      onClick={handleContactMessage}
+                      className="chatbot-send-buttom no-resize"
+                      style={{
+                        border: "1px solid black",
+                        borderLeft: "none",
+                        backgroundColor: "yellow",
+                      }}
+                    >
+                      <i className="fa-solid fa-paper-plane text-black"></i>
+                    </InputGroup.Text>
+                  </InputGroup>
+
+                  <center>
+                    <p className="text-black pt-1" style={{ fontSize: "13px" }}>
+                      <Image
+                        src="logo.png"
+                        alt=""
+                        className=""
+                        style={{
+                          width: "18px",
+                          height: "18px",
+                          borderRadius: "50%",
+                          marginRight: "5px",
+                        }}
+                      />
+                      Powerd by{" "}
+                      <a
+                        href="https://kontactly.ai/"
+                        target="__blank"
+                        className="text-black"
+                      >
+                        kontactly.ai
+                      </a>
+                    </p>
+                  </center>
+                </div>
+              </div>
+            ) : (
+              <div>No mode enabled.</div>
+            )
+          ) : welcomeshow ? (
             <div
               style={{
                 position: "fixed",
@@ -511,8 +813,6 @@ const Chatbot = ({ url }) => {
               }}
             ></div>
           ))}
-
-          
       </Container>
     </>
   );
