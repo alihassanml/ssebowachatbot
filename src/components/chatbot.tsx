@@ -23,6 +23,7 @@ const Chatbot = ({ url }) => {
   const [Chatmode, setChatmode] = useState(true);
   const [adminEmail, setAdminEmail] = useState("");
   const [currentPrompt, setCurrentPrompt] = useState("name");
+  const [userrole, setuserrole] = useState("user");
 
   const [userData, setUserData] = useState(() => {
     const storedData = JSON.parse(localStorage.getItem("userData"));
@@ -54,11 +55,9 @@ const Chatbot = ({ url }) => {
     }
   };
 
-
   const checkActiveStatus = async () => {
     const url = `https://api.kontactly.ai/get-message/?admin_email=${adminEmail}&user_email=${userData.email}`;
     try {
-      
       const response = await fetch(url, { method: "POST" });
       if (!response.ok) {
         console.error("Failed to fetch API:", response.statusText);
@@ -69,22 +68,21 @@ const Chatbot = ({ url }) => {
 
       if (data.Message === "Connection not active.") {
         setActiveStatusUser(false);
-        return false; 
+        return false;
       } else {
         setActiveStatusUser(true);
         setContactmessages([
           {
             type: "system",
             text: "Connection active! You're now chatting with our support admin.",
-          }
+          },
         ]);
-        return true; 
+        return true;
       }
     } catch (error) {
       console.error("Error fetching API:", error);
       setActiveStatusUser(false);
-      return false; 
-
+      return false;
     }
   };
 
@@ -92,7 +90,7 @@ const Chatbot = ({ url }) => {
     setChatmode(false);
     setContactmode(true);
 
-    if (!userData.name || !userData.email ) {
+    if (!userData.name || !userData.email) {
       if (contactmessages.length === 0) {
         // Add messages only once
         setContactmessages([
@@ -104,21 +102,20 @@ const Chatbot = ({ url }) => {
         ]);
       }
       setCurrentPrompt("name");
-    }else {
-      const activ = await checkActiveStatus(); 
+    } else {
+      const activ = await checkActiveStatus();
 
       if (activ) {
-        console.log('connection successfully!')
+        console.log("connection successfully!");
       } else {
         setContactmessages([
           {
             type: "system",
             text: "Welcome back! Trying to reconnect with an admin...",
-          }
+          },
         ]);
       }
     }
-    
   };
 
   const handleSendMessage = async () => {
@@ -198,7 +195,6 @@ const Chatbot = ({ url }) => {
                   onClick={() => {
                     setChatmode(true);
                     setContactmode(false);
-                    alert("no");
                   }}
                 >
                   No
@@ -244,8 +240,6 @@ const Chatbot = ({ url }) => {
     }
   }, [messages]);
 
-
-
   const sendAdminNotification = async ({ name, user_email, message }) => {
     const url = `https://api.kontactly.ai/notification/?admin_email=${adminEmail}&name=${encodeURIComponent(
       name
@@ -273,11 +267,6 @@ const Chatbot = ({ url }) => {
       ]);
     }
   };
-
-
-
-
-
 
   const sendLiveRequest = async ({ name, user_email, message }) => {
     const url = `https://api.kontactly.ai/user_connect/?admin_email=${adminEmail}&name=${encodeURIComponent(
@@ -307,25 +296,19 @@ const Chatbot = ({ url }) => {
     }
   };
 
-
-
-
-
   // --------------------------------------// handle contact /--------------------------------
-
 
   useEffect(() => {
     if (Contactmode && !activeStatusUser) {
       const interval = setInterval(async () => {
-          await checkActiveStatus(); // Call the async function
+        await checkActiveStatus(); // Call the async function
       }, 4000);
-  
+
       return () => clearInterval(interval); // Cleanup on unmount or dependency change
     }
   }, [Contactmode, activeStatusUser]); // Dependencies
-  
-  
-  const [apiData,setApiData] = useState([])
+
+  const [apiData, setApiData] = useState([]);
 
   const fetchMessage = async (admin, user) => {
     try {
@@ -341,32 +324,55 @@ const Chatbot = ({ url }) => {
       }
 
       const data = await response.json();
-      const messagesArray = data.messages.map(msg => ({
+      const messagesArray = data.messages.map((msg) => ({
         text: msg.message,
         type: msg.role,
       }));
-      setApiData(messagesArray)
-      console.log(messagesArray)
-      
+      setApiData(messagesArray);
+      console.log(messagesArray);
     } catch (error) {
       console.error("Error fetching message:", error);
     }
   };
-
-
 
   useEffect(() => {
     let interval;
     if (adminEmail && userData.email && activeStatusUser && Contactmode) {
       interval = setInterval(() => {
         fetchMessage(adminEmail, userData.email);
-      }, 3000);
+      }, 2000);
     }
 
     return () => clearInterval(interval);
-  },[adminEmail, userData.email, activeStatusUser, Contactmode]);
+  }, [adminEmail, userData.email, activeStatusUser, Contactmode]);
 
+  const updateMessage = async (contactInput: string) => {
+    try {
+      const response = await fetch(
+        `https://api.kontactly.ai/update-message/?admin_email=${adminEmail}&user_email=${userData.email}&role=${userrole}&new_message=${contactInput}`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            admin_email: adminEmail, // Corrected variable name
+            user_email: userData.email, // Corrected variable name
+            new_message: contactInput,
+            role: userrole, // Using the userrole variable as per your original code
+          }),
+        }
+      );
 
+      if (response.ok) {
+        console.log("Message updated successfully");
+      } else {
+        console.error("Error updating message:", await response.text());
+      }
+    } catch (error) {
+      console.error("Error updating message:", error);
+    }
+  };
 
   const handleContactMessage = async () => {
     inputRef.current.focus();
@@ -392,7 +398,6 @@ const Chatbot = ({ url }) => {
       } else if (currentPrompt === "message") {
         setUserData((prev) => ({ ...prev, message: contactInput }));
 
-
         console.log("Sending Admin Notification with:", userData);
         sendAdminNotification({
           name: userData.name,
@@ -415,9 +420,9 @@ const Chatbot = ({ url }) => {
         ]);
       }
     } else {
-      const activ = await checkActiveStatus(); 
+      const activ = await checkActiveStatus();
       if (activ) {
-        console.log('hello')
+        updateMessage(contactInput);
       } else {
         setContactmessages((prev) => [
           ...prev,
@@ -426,9 +431,7 @@ const Chatbot = ({ url }) => {
             text: "Waiting, Connection not active!",
           },
         ]);
-        
       }
-
     }
 
     setContactInput("");
@@ -440,7 +443,15 @@ const Chatbot = ({ url }) => {
     setContactmode(false);
   };
 
+  
 
+    const chatContainerRef = useRef(null); // Create a reference to the chat container
+  
+    useEffect(() => {
+      if (chatContainerRef.current) {
+        chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
+      }
+    }, [contactmessages, apiData]);
 
   return (
     <>
@@ -674,7 +685,7 @@ const Chatbot = ({ url }) => {
                   position: "fixed",
                   bottom: "75px",
                   right: "20px",
-                  backgroundColor: "pink",
+                  backgroundColor: "rgb(231, 228, 228)",
                   minWidth: "360px",
                   maxWidth: "360px",
                   minHeight: "530px",
@@ -692,7 +703,7 @@ const Chatbot = ({ url }) => {
                   className="chatbot-1st-header d-flex "
                   style={{ backgroundColor: `${projectData.color}` }}
                 >
-                 <Col
+                  <Col
                     style={{ margin: 0, padding: 0, flex: "0 0 15%" }}
                     className="pt-2"
                   >
@@ -715,24 +726,30 @@ const Chatbot = ({ url }) => {
                       alignItems: "center",
                     }}
                   >
-                    <h2 className="pt-3 ps-4" style={{fontWeight:"bold"}}>{capitalizeFirstLetter(projectData.chatbot_name)}</h2>
+                    <h2 className="pt-3 ps-4" style={{ fontWeight: "bold",fontSize:"25px" }}>
+                      {capitalizeFirstLetter(projectData.chatbot_name)}
+                    </h2>
                   </Col>
-                  
+
                   <Col
                     style={{ margin: 0, padding: 0, flex: "0 0 15%" }}
                     className="d-flex"
                   >
-                    <i className="fa-solid fa-phone " style={{paddingTop:"25px",fontSize:"24px",transform:"rotate(180deg)",marginLeft:"30px"}}></i>
+                    <i
+                      className="fa-solid fa-phone "
+                      style={{
+                        paddingTop: "25px",
+                        fontSize: "23px",
+                        transform: "rotate(180deg)",
+                        marginLeft: "30px",
+                      }}
+                    ></i>
                   </Col>
                 </header>
 
                 {/* mids contact chat */}
 
-                <div
-                  className="bg-danger chatbot-mid-scroll p-2"
-                  ref={chatBoxRef}
-                  
-                >
+                <div className=" chatbot-mid-scroll p-2" ref={chatContainerRef}>
                   {contactmessages.map((message, index) => (
                     <div
                       key={index}
@@ -765,36 +782,57 @@ const Chatbot = ({ url }) => {
                             {capitalizeFirstLetter(message.text)}
                           </button>
                         )}
-
-                        
                       </strong>
-
-                      
                     </div>
                   ))}
 
-{apiData.length === 0 ? (
-                <div className="loading-indicator">
-                </div>
-              ) :apiData.map((message, index) => (
-              <div
-                key={index}
-                className={`live-chat-message ${message.type} mt-2`}
-              >
-                {capitalizeFirstLetter(message.text)} 
-              </div>
-            ))}
+                  {apiData.map((message, index) => (
+                    <div
+                      key={index}
+                      className={
+                        message.type === "user"
+                          ? "user-message"
+                          : "chatbot-message"
+                      }
+                      style={{
+                        textAlign: message.type === "user" ? "right" : "left",
+                        margin: "5px 0",
+                      }}
+                    >
+                      <strong>
+                        {message.type === "user" ? (
+                          <button
+                            className="left-resonse"
+                            style={{
+                              backgroundColor: projectData.color,
+                              color: "white",
+                            }}
+                          >
+                            {capitalizeFirstLetter(message.text)}
+                          </button>
+                        ) : (
+                          <button
+                            className="left-resonse"
+                            style={{ color: "black" }}
+                          >
+                            {capitalizeFirstLetter(message.text)}
+                          </button>
+                        )}
+                      </strong>
+                    </div>
+                  ))}
                 </div>
 
                 {/* bottom  */}
                 <div
-                  className=" bg-primary"
+                  className=""
                   style={{
                     bottom: "0",
                     position: "fixed",
                     width: "100%",
                     maxHeight: "70px",
                     minHeight: "83px",
+                    backgroundColor:"rgb(231, 228, 228)"
                   }}
                 >
                   <InputGroup className="pt-1 mt-1 ps-2 pe-2">
@@ -816,7 +854,7 @@ const Chatbot = ({ url }) => {
                         border: "1px solid black",
                         borderRight: "none",
                         // paddingTop: "12px",
-                        backgroundColor: "green",
+                        backgroundColor: "rgb(231, 228, 228)",
                         // lineHeight: "11px",
                         // paddingBottom: "5px !important",
                         resize: "none",
@@ -829,7 +867,7 @@ const Chatbot = ({ url }) => {
                       style={{
                         border: "1px solid black",
                         borderLeft: "none",
-                        backgroundColor: "yellow",
+                        backgroundColor: "rgb(231, 228, 228)",
                       }}
                     >
                       <i className="fa-solid fa-paper-plane text-black"></i>
@@ -865,7 +903,6 @@ const Chatbot = ({ url }) => {
               <div>No mode enabled.</div>
             )
           ) : welcomeshow ? (
-              
             <div
               style={{
                 position: "fixed",
@@ -880,27 +917,25 @@ const Chatbot = ({ url }) => {
                 boxShadow: "0 0px 6px rgba(0, 0, 0, 0.44)",
                 overflowY: "auto",
                 color: "black",
-                paddingTop:"15px",
-                paddingLeft:"15px",
-                paddingRight:"10px",
-                
+                paddingTop: "15px",
+                paddingLeft: "15px",
+                paddingRight: "10px",
+
                 opacity: 1,
                 transform: showChatbot ? "translateY(0)" : "translateY(20px)", // Slide in/out effect
                 transition: "opacity 0.5s ease, transform 0.5s ease", // Transition properties
                 // display:`${welcomeshow ? "":"none"}`
-                justifyContent:"center"
+                justifyContent: "center",
               }}
             >
-              
-             
               <div style={{ display: "flex" }}>
                 <h3
                   className=""
                   onClick={() => setwelcomeshow(false)}
                   style={{
                     right: "4px",
-                    top:"0px",
-                    fontSize:"15px",
+                    top: "0px",
+                    fontSize: "15px",
                     position: "fixed",
                     color: "gray",
                   }}
@@ -946,7 +981,6 @@ const Chatbot = ({ url }) => {
                 // display:`${welcomeshow ? "":"none"}`
               }}
             ></div>
-            
           ))}
       </Container>
     </>

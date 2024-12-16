@@ -24,7 +24,7 @@ html, body, #root {
   min-height: 50vh;
   max-height: 50vh;
   overflow-y: scroll;
-  margin-bottom: 90px;
+  margin-bottom: 70px;
 }
 
 ::-webkit-scrollbar {
@@ -78,7 +78,7 @@ html, body, #root {
  
 
   .live-chat-message {
-    width: 40%;
+    min-width: 20% ;
     padding: 9px;
     border-radius: 7px;
   }
@@ -87,10 +87,9 @@ html, body, #root {
     background-color: rgb(32, 35, 39);
     color: white;
     border-bottom-left-radius: 0px;
-    margin-left: 57% ;
+    float: right;
     min-height: 40px !important;
     overflow-y: auto;
-    width: 40% !important;
   }
   
   .live-chat-message.admin {
