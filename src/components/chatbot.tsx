@@ -7,6 +7,7 @@ import qs from "qs";
 import { Button, Image, Row, Col } from "react-bootstrap";
 import InputGroup from "react-bootstrap/InputGroup";
 import Form from "react-bootstrap/Form";
+import { TypeAnimation } from "react-type-animation";
 
 const Chatbot = ({ url }) => {
   const [projectData, setProjectData] = useState(null);
@@ -20,22 +21,21 @@ const Chatbot = ({ url }) => {
 
   const [Contactmode, setContactmode] = useState(false);
   const [Chatmode, setChatmode] = useState(true);
-  const [adminEmail, setAdminEmail] = useState('');
-  const [currentPrompt, setCurrentPrompt] = useState("name"); 
+  const [adminEmail, setAdminEmail] = useState("");
+  const [currentPrompt, setCurrentPrompt] = useState("name");
 
   const [userData, setUserData] = useState(() => {
     const storedData = JSON.parse(localStorage.getItem("userData"));
     return storedData || { name: "", email: "", message: "" };
   });
 
+  useEffect(() => {
+    localStorage.setItem("userData", JSON.stringify(userData));
+  }, [userData]);
+
+  const [activeStatusUser, setActiveStatusUser] = useState(false);
+
   const inputRef = useRef(null);
-  
-  
-
-  // getting information of messag
- 
-  // display current prompot of what he ask 
-
   const fetchProjectData = async () => {
     try {
       const response = await axios.post(
@@ -45,7 +45,7 @@ const Chatbot = ({ url }) => {
       if (response.status === 200) {
         setProjectData(response.data);
         console.log(response.data);
-        setAdminEmail(response.data.email)
+        setAdminEmail(response.data.email);
       } else {
         console.error("Failed to fetch project data:", response);
       }
@@ -55,31 +55,71 @@ const Chatbot = ({ url }) => {
   };
 
 
-  const switchContactMode = () => {
-    alert("Switching to Contact Mode...");
+  const checkActiveStatus = async () => {
+    const url = `https://api.kontactly.ai/get-message/?admin_email=${adminEmail}&user_email=${userData.email}`;
+    try {
+      
+      const response = await fetch(url, { method: "POST" });
+      if (!response.ok) {
+        console.error("Failed to fetch API:", response.statusText);
+        return;
+      }
+      const data = await response.json();
+      console.log("API Response:", userData.email);
+
+      if (data.Message === "Connection not active.") {
+        setActiveStatusUser(false);
+        return false; 
+      } else {
+        setActiveStatusUser(true);
+        setContactmessages([
+          {
+            type: "system",
+            text: "Connection active! You're now chatting with our support admin.",
+          }
+        ]);
+        return true; 
+      }
+    } catch (error) {
+      console.error("Error fetching API:", error);
+      setActiveStatusUser(false);
+      return false; 
+
+    }
+  };
+
+  const switchContactMode = async () => {
     setChatmode(false);
     setContactmode(true);
-  
-    if (!userData.name || !userData.email) {
-      if (contactmessages.length === 0) { // Add messages only once
+
+    if (!userData.name || !userData.email ) {
+      if (contactmessages.length === 0) {
+        // Add messages only once
         setContactmessages([
-          { type: "system", text: "Please provide your contact information to ensure we can reconnect in case of disconnection." },
+          {
+            type: "system",
+            text: "Please provide your contact information to ensure we can reconnect in case of disconnection.",
+          },
           { type: "system", text: "What is your name?" },
         ]);
       }
       setCurrentPrompt("name");
-    } else {
-      setContactmessages((prev) => [
-        ...prev,
-        { type: "system", text: "Welcome back! We already have your contact information." },
-      ]);
+    }else {
+      const activ = await checkActiveStatus(); 
+
+      if (activ) {
+        console.log('connection successfully!')
+      } else {
+        setContactmessages([
+          {
+            type: "system",
+            text: "Welcome back! Trying to reconnect with an admin...",
+          }
+        ]);
+      }
     }
+    
   };
-  
-  
-  
-
-
 
   const handleSendMessage = async () => {
     if (!userInput) return;
@@ -107,7 +147,10 @@ const Chatbot = ({ url }) => {
 
       const answer = response.data.answer;
 
-      if (response.data.answer.toLowerCase().includes("false") || response.data.answer.toLowerCase().includes("sorry")) {
+      if (
+        response.data.answer.toLowerCase().includes("false") ||
+        response.data.answer.toLowerCase().includes("sorry")
+      ) {
         setMessages((prev) => [
           ...prev,
           {
@@ -125,7 +168,8 @@ const Chatbot = ({ url }) => {
                       fontWeight: "lighter",
                     }}
                   >
-                    {response.data.answer}Something went wrong. Do you want to connect with the admin?
+                    {response.data.answer}Something went wrong. Do you want to
+                    connect with the admin?
                   </p>
                 </div>
 
@@ -153,7 +197,7 @@ const Chatbot = ({ url }) => {
                   }}
                   onClick={() => {
                     setChatmode(true);
-                     setContactmode(false);
+                    setContactmode(false);
                     alert("no");
                   }}
                 >
@@ -202,26 +246,18 @@ const Chatbot = ({ url }) => {
 
 
 
-
-
   const sendAdminNotification = async ({ name, user_email, message }) => {
-    
-
     const url = `https://api.kontactly.ai/notification/?admin_email=${adminEmail}&name=${encodeURIComponent(
       name
-    )}&user_email=${encodeURIComponent(user_email)}&message=${encodeURIComponent(
-      message
-    )}`;
+    )}&user_email=${encodeURIComponent(
+      user_email
+    )}&message=${encodeURIComponent(message)}`;
 
     try {
       const response = await fetch(url, { method: "POST" });
 
       if (response.ok) {
         console.log("Notification sent successfully!");
-        setContactmessages((prev) => [
-          ...prev,
-          { type: "system", text: "Thank You! Notification sent successfully" },
-        ]);
       } else {
         console.error("Failed to send notification.");
         setContactmessages((prev) => [
@@ -239,24 +275,22 @@ const Chatbot = ({ url }) => {
   };
 
 
-  const sendLiveRequest = async ({ name, user_email, message }) => {
-    
 
+
+
+
+  const sendLiveRequest = async ({ name, user_email, message }) => {
     const url = `https://api.kontactly.ai/user_connect/?admin_email=${adminEmail}&name=${encodeURIComponent(
       name
-    )}&user_email=${encodeURIComponent(user_email)}&message=${encodeURIComponent(
-      message
-    )}`;
+    )}&user_email=${encodeURIComponent(
+      user_email
+    )}&message=${encodeURIComponent(message)}`;
 
     try {
       const response = await fetch(url, { method: "POST" });
 
       if (response.ok) {
         console.log("Notification sent successfully!");
-        setContactmessages((prev) => [
-          ...prev,
-          { type: "system", text: "Thank You! Live Request Send Successfully" },
-        ]);
       } else {
         console.error("Failed to send notification.");
         setContactmessages((prev) => [
@@ -276,12 +310,69 @@ const Chatbot = ({ url }) => {
 
 
 
-  const handleContactMessage = () => {
+
+  // --------------------------------------// handle contact /--------------------------------
+
+
+  useEffect(() => {
+    if (Contactmode && !activeStatusUser) {
+      const interval = setInterval(async () => {
+          await checkActiveStatus(); // Call the async function
+      }, 4000);
+  
+      return () => clearInterval(interval); // Cleanup on unmount or dependency change
+    }
+  }, [Contactmode, activeStatusUser]); // Dependencies
+  
+  
+  const [apiData,setApiData] = useState([])
+
+  const fetchMessage = async (admin, user) => {
+    try {
+      const response = await fetch(
+        `https://api.kontactly.ai/get-message/?admin_email=${admin}&user_email=${user}`,
+        {
+          method: "POST", // Changed to GET
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch message");
+      }
+
+      const data = await response.json();
+      const messagesArray = data.messages.map(msg => ({
+        text: msg.message,
+        type: msg.role,
+      }));
+      setApiData(messagesArray)
+      console.log(messagesArray)
+      
+    } catch (error) {
+      console.error("Error fetching message:", error);
+    }
+  };
+
+
+
+  useEffect(() => {
+    let interval;
+    if (adminEmail && userData.email && activeStatusUser && Contactmode) {
+      interval = setInterval(() => {
+        fetchMessage(adminEmail, userData.email);
+      }, 3000);
+    }
+
+    return () => clearInterval(interval);
+  },[adminEmail, userData.email, activeStatusUser, Contactmode]);
+
+
+
+  const handleContactMessage = async () => {
     inputRef.current.focus();
     if (!contactInput.trim()) return;
 
-    if (!userData.name || !userData.email) {
-  
+    if (!userData.name || !userData.email || !userData.message) {
       if (currentPrompt === "name") {
         setUserData((prev) => ({ ...prev, name: contactInput }));
         setContactmessages((prev) => [
@@ -300,50 +391,57 @@ const Chatbot = ({ url }) => {
         setCurrentPrompt("message");
       } else if (currentPrompt === "message") {
         setUserData((prev) => ({ ...prev, message: contactInput }));
-        setContactmessages((prev) => [
-          ...prev,
-          { type: "user", text: contactInput },
-          { type: "system", text: "Thank you! Your Notification was sent successfully. Please wait for admin approval." },
-        ]);
-        setCurrentPrompt("");
-    
+
+
+        console.log("Sending Admin Notification with:", userData);
         sendAdminNotification({
           name: userData.name,
           user_email: userData.email,
           message: contactInput,
         });
-    
+        console.log("Sending Live Request with:", userData);
         sendLiveRequest({
           name: userData.name,
           user_email: userData.email,
           message: contactInput,
         });
-    
-        // Optionally reset userData here if you want:
-        // setUserData({ name: "", email: "", message: "" });
+        setContactmessages((prev) => [
+          ...prev,
+          { type: "user", text: contactInput },
+          {
+            type: "system",
+            text: "Thank you! Your Notification was sent successfully. Please wait for admin approval.",
+          },
+        ]);
       }
-      
-    }else{
-      setContactmessages((prev) => [
-        ...prev,
-        { type: "system", text: "You already have data" },
-      ]);
-    setContactInput('');
-    inputRef.current.focus();
+    } else {
+      const activ = await checkActiveStatus(); 
+      if (activ) {
+        console.log('hello')
+      } else {
+        setContactmessages((prev) => [
+          ...prev,
+          {
+            type: "system",
+            text: "Waiting, Connection not active!",
+          },
+        ]);
+        
+      }
 
     }
-  
-    setContactInput('');
+
+    setContactInput("");
     inputRef.current.focus();
   };
-  
-  
-  
+
   const switchChatMode = () => {
     setChatmode(true);
     setContactmode(false);
   };
-  
+
+
+
   return (
     <>
       <Container className="" fluid style={{ backgroundColor: "transparent" }}>
@@ -357,7 +455,7 @@ const Chatbot = ({ url }) => {
               width: "140px",
               height: "45px",
               backgroundColor: `${projectData.toggle_color}`,
-              border: "none",
+              border: "1px solid rgb(253, 248, 248)",
               fontFamily: "sans-serif",
             }}
             onClick={toggleChatbot}
@@ -385,12 +483,12 @@ const Chatbot = ({ url }) => {
                   position: "fixed",
                   bottom: "75px",
                   right: "20px",
-                  backgroundColor: "gray",
+                  backgroundColor: "rgb(231, 228, 228)",
                   minWidth: "360px",
                   maxWidth: "360px",
                   minHeight: "530px",
                   borderRadius: "10px",
-                  boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
+                  boxShadow: "0 4px 6px rgba(0, 0, 0, 0.36)",
                   padding: "20px",
                   overflowY: "auto",
                   opacity: showChatbot ? 1 : 0, // Fade-in/fade-out effect
@@ -401,7 +499,10 @@ const Chatbot = ({ url }) => {
               >
                 <header
                   className="chatbot-1st-header d-flex "
-                  style={{ backgroundColor: `${projectData.color}` }}
+                  style={{
+                    backgroundColor: `${projectData.color}`,
+                    border: "1px solid `${projectData.color}`",
+                  }}
                 >
                   <Col
                     style={{
@@ -452,8 +553,11 @@ const Chatbot = ({ url }) => {
                 </header>
 
                 <div
-                  className="bg-info chatbot-mid-scroll p-2"
+                  className="chatbot-mid-scroll p-2"
                   ref={chatBoxRef}
+                  style={{
+                    backgroundColor: "rgb(231, 228, 228)",
+                  }}
                 >
                   {messages.map((message, index) => (
                     <div
@@ -494,8 +598,8 @@ const Chatbot = ({ url }) => {
                   ))}
                 </div>
 
-                <div className="chatbot-footer bg-primary">
-                  <InputGroup className="pt-2 ps-2 pe-2" >
+                <div className="chatbot-footer">
+                  <InputGroup className="pt-2 ps-2 pe-2">
                     <Form.Control
                       placeholder=""
                       as="textarea"
@@ -510,13 +614,16 @@ const Chatbot = ({ url }) => {
                         minHeight: "50px",
                         outline: "none",
                         boxShadow: "0 0 5px transparent",
-                        border: "1px solid black",
-                        borderRight: "none",
+                        borderTop: "1px solid rgb(112, 111, 111)",
+                        borderBottom: "1px solid rgb(112, 111, 111)",
+                        borderLeft: "1px solid rgb(112, 111, 111)",
+                        borderRight: "1px solid transparent",
                         paddingTop: "16px",
-                        backgroundColor: "green",
+                        backgroundColor: "transparent",
                         lineHeight: "16px",
                         paddingBottom: "3px !important",
                         resize: "none",
+                        color: "rgb(31, 30, 30)",
                       }}
                     />
                     <InputGroup.Text
@@ -524,9 +631,11 @@ const Chatbot = ({ url }) => {
                       onClick={handleSendMessage}
                       className="chatbot-send-buttom no-resize"
                       style={{
-                        border: "1px solid black",
+                        borderTop: "1px solid rgb(112, 111, 111)",
+                        borderRight: "1px solid rgb(112, 111, 111)",
+                        borderBottom: "1px solid rgb(112, 111, 111)",
                         borderLeft: "none",
-                        backgroundColor: "yellow",
+                        backgroundColor: "transparent",
                       }}
                     >
                       <i className="fa-solid fa-paper-plane text-black"></i>
@@ -577,67 +686,52 @@ const Chatbot = ({ url }) => {
                   transform: showChatbot ? "translateY(0)" : "translateY(20px)", // Slide in/out effect
                   transition: "opacity 0.5s ease, transform 0.5s ease", // Transition properties
                   margin: 0,
-                  
                 }}
               >
                 <header
                   className="chatbot-1st-header d-flex "
                   style={{ backgroundColor: `${projectData.color}` }}
                 >
+                 <Col
+                    style={{ margin: 0, padding: 0, flex: "0 0 15%" }}
+                    className="pt-2"
+                  >
+                    <h3 className="mt-2 ms-4" onClick={switchChatMode}>
+                      <i
+                        className="fa-solid fa-arrow-right"
+                        style={{
+                          cursor: "pointer",
+                          transform: "rotate(180deg)",
+                        }}
+                      ></i>
+                    </h3>
+                  </Col>
                   <Col
                     style={{
                       margin: 0,
                       padding: "0",
-                      flex: "0 0 25%",
+                      flex: "0 0 60%",
                       textAlign: "center",
                       alignItems: "center",
                     }}
                   >
-                    <Image
-                      src={projectData.logo_name}
-                      alt={`${projectData.chatbot_name} logo`}
-                      className="mt-3"
-                      style={{
-                        width: "60px",
-                        height: "60px",
-                        borderRadius: "50%",
-                        marginRight: "5px",
-                      }}
-                    />
+                    <h2 className="pt-3 ps-4" style={{fontWeight:"bold"}}>{capitalizeFirstLetter(projectData.chatbot_name)}</h2>
                   </Col>
-                  <Col
-                    style={{ margin: 0, padding: 0, flex: "0 0 60%" }}
-                    className="pt-2"
-                  >
-                    <h1
-                      className="mt-2"
-                      style={{ fontSize: "25px", fontWeight: "bold" }}
-                    >
-                      {capitalizeFirstLetter(projectData.chatbot_name)}
-                    </h1>
-                    <p>online</p>
-                  </Col>
+                  
                   <Col
                     style={{ margin: 0, padding: 0, flex: "0 0 15%" }}
                     className="d-flex"
                   >
-                    <h3
-                      className="mt-2"
-                      onClick={switchChatMode}
-                    >
-                      <i
-                        className="fa-solid fa-minus"
-                        style={{ cursor: "pointer" }}
-                      ></i>
-                    </h3>
+                    <i className="fa-solid fa-phone " style={{paddingTop:"25px",fontSize:"24px",transform:"rotate(180deg)",marginLeft:"30px"}}></i>
                   </Col>
                 </header>
 
                 {/* mids contact chat */}
-                
+
                 <div
                   className="bg-danger chatbot-mid-scroll p-2"
                   ref={chatBoxRef}
+                  
                 >
                   {contactmessages.map((message, index) => (
                     <div
@@ -671,30 +765,49 @@ const Chatbot = ({ url }) => {
                             {capitalizeFirstLetter(message.text)}
                           </button>
                         )}
+
+                        
                       </strong>
+
+                      
                     </div>
                   ))}
+
+{apiData.length === 0 ? (
+                <div className="loading-indicator">
+                </div>
+              ) :apiData.map((message, index) => (
+              <div
+                key={index}
+                className={`live-chat-message ${message.type} mt-2`}
+              >
+                {capitalizeFirstLetter(message.text)} 
+              </div>
+            ))}
                 </div>
 
                 {/* bottom  */}
-                <div className=" bg-primary" style={{
-                  bottom:"0",
-                  position:"fixed",
-                  width:"100%",
-                  maxHeight:"70px",
-                  minHeight:"83px",
-                }}>
-                  <InputGroup className="pt-2 ps-2 pe-2" >
+                <div
+                  className=" bg-primary"
+                  style={{
+                    bottom: "0",
+                    position: "fixed",
+                    width: "100%",
+                    maxHeight: "70px",
+                    minHeight: "83px",
+                  }}
+                >
+                  <InputGroup className="pt-1 mt-1 ps-2 pe-2">
                     <Form.Control
                       placeholder=""
-                      as="textarea"
+                      // as="textarea"
                       ref={inputRef}
                       value={contactInput}
                       onChange={(e) => setContactInput(e.target.value)}
                       onKeyPress={(e) => {
-                        if (e.key === "Enter" && !e.shiftKey) handleContactMessage();
+                        if (e.key === "Enter" && !e.shiftKey)
+                          handleContactMessage();
                       }}
-                      
                       className="chatbot-text-input"
                       style={{
                         minHeight: "50px",
@@ -702,10 +815,10 @@ const Chatbot = ({ url }) => {
                         boxShadow: "0 0 5px transparent",
                         border: "1px solid black",
                         borderRight: "none",
-                        paddingTop: "12px",
+                        // paddingTop: "12px",
                         backgroundColor: "green",
-                        lineHeight: "17px",
-                        paddingBottom: "3px !important",
+                        // lineHeight: "11px",
+                        // paddingBottom: "5px !important",
                         resize: "none",
                       }}
                     />
@@ -752,51 +865,72 @@ const Chatbot = ({ url }) => {
               <div>No mode enabled.</div>
             )
           ) : welcomeshow ? (
+              
             <div
               style={{
                 position: "fixed",
                 bottom: "95px",
                 right: "20px",
-                backgroundColor: `${projectData.color}`,
-                minWidth: "320px",
+                backgroundColor: "#f1f1f1",
+                minWidth: "10px",
                 maxWidth: "450px",
-                minHeight: "110px",
+                minHeight: "10px",
                 maxHeight: "139px",
-                borderRadius: "10px",
-                boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
-                paddingLeft: "20px",
-                paddingRight: "20px",
-                // paddingTop: "15px",
+                borderRadius: "5px",
+                boxShadow: "0 0px 6px rgba(0, 0, 0, 0.44)",
                 overflowY: "auto",
+                color: "black",
+                paddingTop:"15px",
+                paddingLeft:"15px",
+                paddingRight:"10px",
+                
                 opacity: 1,
                 transform: showChatbot ? "translateY(0)" : "translateY(20px)", // Slide in/out effect
                 transition: "opacity 0.5s ease, transform 0.5s ease", // Transition properties
                 // display:`${welcomeshow ? "":"none"}`
+                justifyContent:"center"
               }}
             >
+              
+             
               <div style={{ display: "flex" }}>
                 <h3
                   className=""
                   onClick={() => setwelcomeshow(false)}
                   style={{
-                    right: "14px",
+                    right: "4px",
+                    top:"0px",
+                    fontSize:"15px",
                     position: "fixed",
+                    color: "gray",
                   }}
                 >
                   <i
-                    className="fa-solid fa-minus"
-                    style={{ cursor: "pointer" }}
+                    className="fa-solid fa-xmark"
+                    style={{ cursor: "pointer", color: "black" }}
                   ></i>
                 </h3>
               </div>
               <p
                 style={{
-                  fontSize: "15px",
-                  paddingTop: "8%",
+                  fontSize: "14px",
+                  // paddingTop: "7%",
+                  color: "black",
                 }}
                 className=""
               >
-                {projectData.welcome_message}
+                <TypeAnimation
+                  sequence={[
+                    `${projectData.welcome_message}`, // The text to type
+                    2000, // Pause for 2 seconds after typing
+                  ]}
+                  speed={75} // Typing speed (lower is slower)
+                  wrapper="p" // HTML element wrapper (like <p>)
+                  style={{
+                    fontSize: "14px",
+                    color: "black",
+                  }}
+                />
               </p>
             </div>
           ) : (
@@ -812,6 +946,7 @@ const Chatbot = ({ url }) => {
                 // display:`${welcomeshow ? "":"none"}`
               }}
             ></div>
+            
           ))}
       </Container>
     </>

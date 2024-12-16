@@ -17,20 +17,21 @@ html, body, #root {
   border-radius: 50%;
 }
 .chatbot-1st-header {
-  min-height: 100px;
+  min-height: 70px;
   background-color: black;
 }
 .chatbot-mid-scroll {
-  min-height: 53vh;
-  max-height: 53vh;
+  min-height: 50vh;
+  max-height: 50vh;
   overflow-y: scroll;
+  margin-bottom: 90px;
 }
 
 ::-webkit-scrollbar {
   width: 5px;
 }
 ::-webkit-scrollbar-track {
-  background: gray;
+  background: rgb(231, 228, 228);
 }
 
 ::-webkit-scrollbar-thumb {
@@ -40,6 +41,7 @@ html, body, #root {
 }
 
 .chatbot-footer{
+    background: rgb(231, 228, 228);
     min-height: 83px;
     max-height: 70px;
     bottom: 0px;
@@ -71,5 +73,30 @@ html, body, #root {
     border: none;
     color: rgb(233, 229, 229);
     text-align: start;
-    background-color: rgb(216, 214, 214);
+    background-color: rgb(253, 248, 248);
+  }
+ 
+
+  .live-chat-message {
+    width: 40%;
+    padding: 9px;
+    border-radius: 7px;
+  }
+  
+  .live-chat-message.user {
+    background-color: rgb(32, 35, 39);
+    color: white;
+    border-bottom-left-radius: 0px;
+    margin-left: 57% ;
+    min-height: 40px !important;
+    overflow-y: auto;
+    width: 40% !important;
+  }
+  
+  .live-chat-message.admin {
+    background-color: rgb(247, 246, 246);
+    backdrop-filter: blur(10px);
+    color: black;
+    border: 1px solid rgb(233, 230, 230);
+    border-bottom-right-radius: 0px;
   }
