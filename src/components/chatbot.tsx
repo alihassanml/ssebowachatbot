@@ -749,7 +749,9 @@ const Chatbot = ({ url }) => {
 
                 {/* mids contact chat */}
 
-                <div className=" chatbot-mid-scroll p-2" ref={chatContainerRef}>
+                <div className=" chatbot-mid-scroll p-2" ref={chatContainerRef} style={{
+                  minHeight:"58vh"
+                }}>
                   {contactmessages.map((message, index) => (
                     <div
                       key={index}
