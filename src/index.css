@@ -21,8 +21,8 @@ html, body, #root {
   background-color: black;
 }
 .chatbot-mid-scroll {
-  min-height: 50vh;
-  max-height: 50vh;
+  min-height: 57vh;
+  max-height: 57vh;
   overflow-y: scroll;
   margin-bottom: 70px;
 }
@@ -71,7 +71,7 @@ html, body, #root {
     padding: 10px;
     font-size: 14px;
     border: none;
-    color: rgb(233, 229, 229);
+    color: rgb(255, 255, 255) ;
     text-align: start;
     background-color: rgb(253, 248, 248);
   }
@@ -99,3 +99,16 @@ html, body, #root {
     border: 1px solid rgb(233, 230, 230);
     border-bottom-right-radius: 0px;
   }
+
+  .react-markdown * {
+    all: unset;
+  }
+  /* Targeting the container */
+.markdown-content {
+  color: rgb(255, 255, 255); /* Change this to your desired color */
+  font-size: 16px;
+}
+.markdown-content p{
+  color: black;
+  font-size: 14px;
+}

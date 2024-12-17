@@ -3,6 +3,7 @@ import Container from "react-bootstrap/Container";
 import "bootstrap/dist/css/bootstrap.min.css";
 import axios from "axios";
 import qs from "qs";
+import ReactMarkdown from "react-markdown";
 
 import { Button, Image, Row, Col } from "react-bootstrap";
 import InputGroup from "react-bootstrap/InputGroup";
@@ -29,6 +30,7 @@ const Chatbot = ({ url }) => {
     const storedData = JSON.parse(localStorage.getItem("userData"));
     return storedData || { name: "", email: "", message: "" };
   });
+  const [showButtons, setShowButtons] = useState(false);
 
   useEffect(() => {
     localStorage.setItem("userData", JSON.stringify(userData));
@@ -120,6 +122,7 @@ const Chatbot = ({ url }) => {
 
   const handleSendMessage = async () => {
     if (!userInput) return;
+    setShowButtons(false);
 
     setMessages((prev) => [...prev, { type: "user", text: userInput }]);
     if (userInput.trim()) {
@@ -148,6 +151,8 @@ const Chatbot = ({ url }) => {
         response.data.answer.toLowerCase().includes("false") ||
         response.data.answer.toLowerCase().includes("sorry")
       ) {
+        setShowButtons(true);
+
         setMessages((prev) => [
           ...prev,
           {
@@ -165,45 +170,16 @@ const Chatbot = ({ url }) => {
                       fontWeight: "lighter",
                     }}
                   >
-                    {response.data.answer}Something went wrong. Do you want to
-                    connect with the admin?
+                    Something went wrong. Would you like to talk to our customer
+                    support center?
                   </p>
                 </div>
-
-                <button
-                  style={{
-                    margin: "5px",
-                    padding: "5px 10px",
-                    backgroundColor: `${projectData.color}`,
-                    border: "none",
-                    borderRadius: "5px",
-                    cursor: "pointer",
-                  }}
-                  onClick={switchContactMode}
-                >
-                  Yes
-                </button>
-                <button
-                  style={{
-                    margin: "5px",
-                    padding: "5px 10px",
-                    backgroundColor: `${projectData.color}`,
-                    border: "none",
-                    borderRadius: "5px",
-                    cursor: "pointer",
-                  }}
-                  onClick={() => {
-                    setChatmode(true);
-                    setContactmode(false);
-                  }}
-                >
-                  No
-                </button>
               </>
             ),
           },
         ]);
       } else {
+        setShowButtons(false);
         setMessages((prev) => [...prev, { type: "chatbot", text: answer }]);
       }
     } catch (error) {
@@ -443,15 +419,21 @@ const Chatbot = ({ url }) => {
     setContactmode(false);
   };
 
-  
+  const chatContainerRef = useRef(null); // Create a reference to the chat container
 
-    const chatContainerRef = useRef(null); // Create a reference to the chat container
-  
-    useEffect(() => {
-      if (chatContainerRef.current) {
-        chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
+  useEffect(() => {
+    const chatContainer = chatContainerRef.current;
+
+    if (chatContainer) {
+      const isNearBottom =
+        chatContainer.scrollHeight - chatContainer.scrollTop <=
+        chatContainer.clientHeight + 50; // Buffer of 50px for user comfort
+
+      if (isNearBottom) {
+        chatContainer.scrollTop = chatContainer.scrollHeight; // Auto-scroll only when near bottom
       }
-    }, [contactmessages, apiData]);
+    }
+  }, [contactmessages, apiData]);
 
   return (
     <>
@@ -563,51 +545,83 @@ const Chatbot = ({ url }) => {
                   </Col>
                 </header>
 
-                <div
-                  className="chatbot-mid-scroll p-2"
-                  ref={chatBoxRef}
-                  style={{
-                    backgroundColor: "rgb(231, 228, 228)",
-                  }}
-                >
-                  {messages.map((message, index) => (
-                    <div
-                      key={index}
-                      className={
-                        message.type === "user"
-                          ? "user-message"
-                          : "chatbot-message"
-                      }
-                      style={{
-                        textAlign: message.type === "user" ? "right" : "left",
-                        margin: "5px 0",
-                      }}
-                    >
-                      <strong>
-                        {message.type === "user" ? (
-                          <button
-                            className="left-resonse"
-                            style={{
-                              backgroundColor: projectData.color,
-                              color: "auto",
-                            }}
-                          >
-                            {capitalizeFirstLetter(message.text)}
-                          </button>
-                        ) : message.component ? (
-                          message.component
-                        ) : (
-                          <button
-                            className="left-resonse"
-                            style={{ color: "black" }}
-                          >
-                            {capitalizeFirstLetter(message.text)}
-                          </button>
-                        )}
-                      </strong>
-                    </div>
-                  ))}
-                </div>
+                <div className="chatbot-mid-scroll p-2" ref={chatBoxRef} style={{ backgroundColor: "rgb(231, 228, 228)" }}>
+  {messages.map((message, index) => (
+    <div
+      key={index}
+      className={message.type === "user" ? "user-message" : "chatbot-message"}
+      style={{
+        textAlign: message.type === "user" ? "right" : "left",
+        margin: "5px 0",
+      }}
+    >
+      <strong>
+        {message.type === "user" ? (
+          <button
+            className="left-resonse"
+            style={{
+              backgroundColor: projectData.color,
+              color: "",
+            }}
+          >
+            {capitalizeFirstLetter(message.text)}
+          </button>
+        ) : message.component ? (
+          message.component
+        ) : (
+          <button
+            className="left-resonse"
+            style={{ color: "black !important" }}
+          >
+            <ReactMarkdown className="markdown-content">
+              {capitalizeFirstLetter(message.text)}
+            </ReactMarkdown>
+          </button>
+        )}
+      </strong>
+    </div>
+  ))}
+
+  {/* Conditional Buttons outside the loop */}
+  {showButtons && (
+    <div style={{ marginTop: "10px", textAlign: "center" }}>
+      <button
+        style={{
+          margin: "1px",
+          padding: "4px 20px",
+          backgroundColor: `${projectData.color}`,
+          border: "none",
+          borderRadius: "5px",
+          cursor: "pointer",
+        }}
+        onClick={() => {
+          setShowButtons(false);
+          switchContactMode();
+        }}
+      >
+        Yes
+      </button>
+      <button
+        style={{
+          margin: "1px",
+          padding: "4px 20px",
+          backgroundColor: `${projectData.color}`,
+          border: "none",
+          borderRadius: "5px",
+          cursor: "pointer",
+        }}
+        onClick={() => {
+          setShowButtons(false);
+          setChatmode(true);
+          setContactmode(false);
+        }}
+      >
+        No
+      </button>
+    </div>
+  )}
+</div>
+
 
                 <div className="chatbot-footer">
                   <InputGroup className="pt-2 ps-2 pe-2">
@@ -726,7 +740,10 @@ const Chatbot = ({ url }) => {
                       alignItems: "center",
                     }}
                   >
-                    <h2 className="pt-3 ps-4" style={{ fontWeight: "bold",fontSize:"25px" }}>
+                    <h2
+                      className="pt-3 ps-4"
+                      style={{ fontWeight: "bold", fontSize: "25px" }}
+                    >
                       {capitalizeFirstLetter(projectData.chatbot_name)}
                     </h2>
                   </Col>
@@ -749,9 +766,13 @@ const Chatbot = ({ url }) => {
 
                 {/* mids contact chat */}
 
-                <div className=" chatbot-mid-scroll p-2" ref={chatContainerRef} style={{
-                  minHeight:"58vh"
-                }}>
+                <div
+                  className=" chatbot-mid-scroll p-2"
+                  ref={chatContainerRef}
+                  style={{
+                    minHeight: "58vh",
+                  }}
+                >
                   {contactmessages.map((message, index) => (
                     <div
                       key={index}
@@ -815,7 +836,7 @@ const Chatbot = ({ url }) => {
                         ) : (
                           <button
                             className="left-resonse"
-                            style={{ color: "black" }}
+                            style={{ color: "black " }}
                           >
                             {capitalizeFirstLetter(message.text)}
                           </button>
@@ -834,7 +855,7 @@ const Chatbot = ({ url }) => {
                     width: "100%",
                     maxHeight: "70px",
                     minHeight: "83px",
-                    backgroundColor:"rgb(231, 228, 228)"
+                    backgroundColor: "rgb(231, 228, 228)",
                   }}
                 >
                   <InputGroup className="pt-1 mt-1 ps-2 pe-2">
