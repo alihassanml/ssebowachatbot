@@ -36,6 +36,20 @@ const Chatbot = ({ url }) => {
     localStorage.setItem("userData", JSON.stringify(userData));
   }, [userData]);
 
+  useEffect(() => {
+    const handleUnload = () => {
+      localStorage.removeItem("userData");
+    };
+
+    // Attach the event listener
+    window.addEventListener("beforeunload", handleUnload);
+
+    // Cleanup the event listener
+    return () => {
+      window.removeEventListener("beforeunload", handleUnload);
+    };
+  }, []);
+
   const [activeStatusUser, setActiveStatusUser] = useState(false);
 
   const inputRef = useRef(null);
@@ -163,16 +177,19 @@ const Chatbot = ({ url }) => {
                   style={{ textAlign: "left", marginTop: "10px" }}
                   className="left-resonse "
                 >
-                  <p
+                  <button
                     style={{
                       fontSize: "14px",
                       color: "black",
                       fontWeight: "lighter",
+                      border:"none",
+                      backgroundColor:"transparent",
+                      textAlign:"left"
                     }}
                   >
                     Something went wrong. Would you like to talk to our customer
                     support center?
-                  </p>
+                  </button>
                 </div>
               </>
             ),
@@ -279,7 +296,7 @@ const Chatbot = ({ url }) => {
     if (Contactmode && !activeStatusUser) {
       const interval = setInterval(async () => {
         await checkActiveStatus(); // Call the async function
-      }, 4000);
+      }, 2000);
 
       return () => clearInterval(interval); // Cleanup on unmount or dependency change
     }
@@ -312,16 +329,78 @@ const Chatbot = ({ url }) => {
     }
   };
 
+
+
+  const fetchliverequestaccept = async (admin, user) => {
+    const url = `https://api.kontactly.ai/check-status/?admin_email=${admin}&user_email=${user}`;
+    try {
+      const response = await fetch(url, { method: "POST" });
+      if (!response.ok) {
+        console.error("Failed to fetch API:", response.statusText);
+        return;
+      }
+      const data = await response.json();
+      console.log("API Response-----:", data.Message);
+  
+      if (data.Message === "yes") {
+        if (!activeStatusUser) { // Only update state if not already active
+          setActiveStatusUser(true);
+          setContactmessages([
+            {
+              type: "system",
+              text: "Connection active! You're now chatting with our support admin.",
+            },
+          ]);
+          clearFetchingInterval(); 
+          fetchMessage(admin,user)
+        }
+      } else {
+        console.log("No active connection.");
+      }
+    } catch (error) {
+      console.error("Error fetching API:", error);
+      setActiveStatusUser(false);
+    }
+  };
+  
+  useEffect(() => {
+    let interval;
+  
+    const clearFetchingInterval = () => {
+      if (interval) {
+        clearInterval(interval);
+        interval = null;
+      }
+    };
+  
+    if (adminEmail && userData.email ) {
+      interval = setInterval(() => {
+        fetchliverequestaccept(adminEmail, userData.email);
+      }, 2000);
+    }
+  
+    return () => clearFetchingInterval(); 
+  }, [adminEmail, userData.email, activeStatusUser, Contactmode]);
+  
+  
+  
+
+
+
+
   useEffect(() => {
     let interval;
     if (adminEmail && userData.email && activeStatusUser && Contactmode) {
       interval = setInterval(() => {
         fetchMessage(adminEmail, userData.email);
-      }, 2000);
+      }, 1000);
     }
 
     return () => clearInterval(interval);
   }, [adminEmail, userData.email, activeStatusUser, Contactmode]);
+
+
+
 
   const updateMessage = async (contactInput: string) => {
     try {
@@ -436,6 +515,9 @@ const Chatbot = ({ url }) => {
     }
   }, [contactmessages, apiData]);
 
+
+
+
   useEffect(() => {
     if (Chatmode && messages.length === 0 && projectData?.welcome_message) {
       setMessages([{ type: "chatbot", text: projectData.welcome_message }]);
@@ -445,6 +527,10 @@ const Chatbot = ({ url }) => {
   const cleanMarkdown = (text) => {
     return text.replace(/\n+/g, " ").trim(); // Replace multiple newlines with a single space
   };
+
+
+
+ 
 
   return (
     <>
@@ -461,8 +547,8 @@ const Chatbot = ({ url }) => {
               backgroundColor: `${projectData.toggle_color}`,
               border: "1px solid rgb(253, 248, 248)",
               fontFamily: "sans-serif",
-              boxShadow:"0 0 10px rgba(255, 255, 255, 0.91)",
-              transition:"all 0.2s ease-out"
+              boxShadow: "0px 10px 8px rgba(255, 250, 250, 0.14)",
+              transition:"all 0.2s ease-out",
             }}
             onClick={toggleChatbot}
           >
@@ -490,9 +576,10 @@ const Chatbot = ({ url }) => {
                   bottom: "75px",
                   right: "20px",
                   backgroundColor: "rgb(231, 228, 228)",
-                  minWidth: "360px",
-                  maxWidth: "360px",
-                  minHeight: "530px",
+                  minWidth: "400px",
+                  maxWidth: "400px",
+                  minHeight: "75vh",
+                  maxHeight: "75vh",
                   borderRadius: "10px",
                   boxShadow: "0 4px 6px rgba(0, 0, 0, 0.36)",
                   padding: "20px",
@@ -523,7 +610,7 @@ const Chatbot = ({ url }) => {
                     <Image
                       src={projectData.logo_name}
                       alt={`${projectData.chatbot_name} logo`}
-                      className="mt-3"
+                      className="mt-4"
                       style={{
                         width: "60px",
                         height: "60px",
@@ -534,7 +621,7 @@ const Chatbot = ({ url }) => {
                   </Col>
                   <Col
                     style={{ margin: 0, padding: 0, flex: "0 0 60%" }}
-                    className="pt-2"
+                    className="pt-3"
                   >
                     <h1
                       className="mt-2"
@@ -580,7 +667,7 @@ const Chatbot = ({ url }) => {
                       <strong>
                         {message.type === "user" ? (
                           <button
-                            className="left-resonse"
+                            className="left-resonse-left"
                             style={{
                               backgroundColor: projectData.color,
                               color: "",
@@ -592,13 +679,13 @@ const Chatbot = ({ url }) => {
                           message.component
                         ) : (
                           <button
-                            className="left-resonse"
+                            className="left-resonse-right"
                             style={{ color: "black !important" }}
                           >
                             <ReactMarkdown
                               className="markdown-content"
                               components={{
-                                p: ({ children }) => <>{children}</>, // Remove the <p> tag default behavior
+                                p: ({ children }) => <>{children}</>, 
                               }}
                             >
                               {cleanMarkdown(
@@ -740,9 +827,10 @@ const Chatbot = ({ url }) => {
                   bottom: "75px",
                   right: "20px",
                   backgroundColor: "rgb(231, 228, 228)",
-                  minWidth: "360px",
-                  maxWidth: "360px",
-                  minHeight: "530px",
+                  minWidth: "400px",
+                  maxWidth: "400px",
+                  minHeight: "75vh",
+                  maxHeight:"75vh",
                   borderRadius: "10px",
                   boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
                   padding: "20px",
@@ -811,9 +899,7 @@ const Chatbot = ({ url }) => {
                 <div
                   className=" chatbot-mid-scroll p-2"
                   ref={chatContainerRef}
-                  style={{
-                    minHeight: "58vh",
-                  }}
+                  
                 >
                   {contactmessages.map((message, index) => (
                     <div
@@ -831,7 +917,7 @@ const Chatbot = ({ url }) => {
                       <strong>
                         {message.type === "user" ? (
                           <button
-                            className="left-resonse"
+                            className="left-resonse-left"
                             style={{
                               backgroundColor: projectData.color,
                               color: "white",
@@ -841,7 +927,7 @@ const Chatbot = ({ url }) => {
                           </button>
                         ) : (
                           <button
-                            className="left-resonse"
+                            className="left-resonse-right"
                             style={{ color: "black" }}
                           >
                             {capitalizeFirstLetter(message.text)}
@@ -867,7 +953,7 @@ const Chatbot = ({ url }) => {
                       <strong>
                         {message.type === "user" ? (
                           <button
-                            className="left-resonse"
+                            className="left-resonse-left"
                             style={{
                               backgroundColor: projectData.color,
                               color: "white",
@@ -877,7 +963,7 @@ const Chatbot = ({ url }) => {
                           </button>
                         ) : (
                           <button
-                            className="left-resonse"
+                            className="left-resonse-right"
                             style={{ color: "black " }}
                           >
                             {capitalizeFirstLetter(message.text)}
@@ -896,11 +982,11 @@ const Chatbot = ({ url }) => {
                     position: "fixed",
                     width: "100%",
                     maxHeight: "70px",
-                    minHeight: "83px",
+                    minHeight: "80px",
                     backgroundColor: "rgb(231, 228, 228)",
                   }}
                 >
-                  <InputGroup className="pt-1 mt-1 ps-2 pe-2">
+                  <InputGroup className="  ps-2 pe-2">
                     <Form.Control
                       placeholder=""
                       // as="textarea"
@@ -915,7 +1001,6 @@ const Chatbot = ({ url }) => {
                       style={{
                         minHeight: "50px",
                         outline: "none",
-                        boxShadow: "0 0 5px transparent",
                         border: "1px solid black",
                         borderRight: "none",
                         // paddingTop: "12px",

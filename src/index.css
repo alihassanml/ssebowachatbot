@@ -8,8 +8,8 @@
 
 
 html, body, #root {
-    background-color: transparent !important;
-    /* background-color: rgb(17, 29, 49); */
+    /* background-color: transparent !important; */
+    background-color: rgb(17, 29, 49);
 }
 
 .chatbot-logo-image {
@@ -22,8 +22,8 @@ html, body, #root {
   background-color: black;
 }
 .chatbot-mid-scroll {
-  min-height: 55vh;
-  max-height: 55vh;
+  min-height: 46vh;
+  max-height: 46vh;
   overflow-y: scroll;
   margin-bottom: 74px;
 }
@@ -62,11 +62,24 @@ html, body, #root {
     offset: none;
 }
 
-.left-resonse {
-    border-top-left-radius: 10px;
-    border-top-right-radius: 10px;
-    border-bottom-left-radius: 10px;
-    min-width: 100px;
+.left-resonse-left {
+    border-radius: 8px;
+    border-bottom-right-radius: 0px;
+    min-width: 70px;
+    max-width: 310px;
+    min-height: 37px;
+    padding: 10px;
+    font-size: 14px;
+    border: none;
+    color: rgb(255, 255, 255) ;
+    text-align: start;
+    background-color: rgb(253, 248, 248);
+  }
+ 
+  .left-resonse,.left-resonse-right{
+    border-radius: 8px;
+    border-bottom-left-radius:0px ;
+    min-width: 70px;
     max-width: 310px;
     min-height: 37px;
     padding: 10px;
@@ -87,7 +100,7 @@ html, body, #root {
   .live-chat-message.user {
     background-color: rgb(32, 35, 39);
     color: white;
-    border-bottom-left-radius: 0px;
+    border-bottom-left-radius: 10px;
     float: right;
     min-height: 40px !important;
     overflow-y: auto;
@@ -95,10 +108,11 @@ html, body, #root {
   
   .live-chat-message.admin {
     background-color: rgb(247, 246, 246);
+    border-bottom-left-radius: 10px;
     backdrop-filter: blur(10px);
     color: black;
     border: 1px solid rgb(233, 230, 230);
-    border-bottom-right-radius: 0px;
+    
   }
 
   .react-markdown * {
@@ -115,4 +129,7 @@ html, body, #root {
 }
 .main-chatbot-button:hover{
   transform: scale(1.09);
+}
+.index-module_type__E-SaG::after {
+  content: unset !important;
 }
