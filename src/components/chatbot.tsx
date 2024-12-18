@@ -203,6 +203,8 @@ const Chatbot = ({ url }) => {
 
   const toggleChatbot = () => {
     setShowChatbot((prev) => !prev);
+    setwelcomeshow(false)
+
   };
 
   const capitalizeFirstLetter = (string) => {
@@ -435,6 +437,20 @@ const Chatbot = ({ url }) => {
     }
   }, [contactmessages, apiData]);
 
+  useEffect(() => {
+    if (Chatmode && messages.length === 0 && projectData?.welcome_message) {
+      setMessages([{ type: "chatbot", text: projectData.welcome_message }]);
+    }
+  }, [Chatmode, projectData]);
+  
+  
+  
+  const cleanMarkdown = (text) => {
+    return text.replace(/\n+/g, ' ').trim(); // Replace multiple newlines with a single space
+  }
+  
+
+
   return (
     <>
       <Container className="" fluid style={{ backgroundColor: "transparent" }}>
@@ -470,6 +486,7 @@ const Chatbot = ({ url }) => {
         {projectData &&
           (showChatbot ? (
             Chatmode ? (
+           
               <div
                 className="p-0"
                 style={{
@@ -523,7 +540,7 @@ const Chatbot = ({ url }) => {
                     className="pt-2"
                   >
                     <h1
-                      className="mt-1"
+                      className="mt-2"
                       style={{ fontSize: "25px", fontWeight: "bold" }}
                     >
                       {capitalizeFirstLetter(projectData.chatbot_name)}
@@ -546,81 +563,86 @@ const Chatbot = ({ url }) => {
                 </header>
 
                 <div className="chatbot-mid-scroll p-2" ref={chatBoxRef} style={{ backgroundColor: "rgb(231, 228, 228)" }}>
-  {messages.map((message, index) => (
-    <div
-      key={index}
-      className={message.type === "user" ? "user-message" : "chatbot-message"}
-      style={{
-        textAlign: message.type === "user" ? "right" : "left",
-        margin: "5px 0",
-      }}
-    >
-      <strong>
-        {message.type === "user" ? (
-          <button
-            className="left-resonse"
-            style={{
-              backgroundColor: projectData.color,
-              color: "",
-            }}
-          >
-            {capitalizeFirstLetter(message.text)}
-          </button>
-        ) : message.component ? (
-          message.component
-        ) : (
-          <button
-            className="left-resonse"
-            style={{ color: "black !important" }}
-          >
-            <ReactMarkdown className="markdown-content">
-              {capitalizeFirstLetter(message.text)}
-            </ReactMarkdown>
-          </button>
-        )}
-      </strong>
-    </div>
-  ))}
+                  {messages.map((message, index) => (
+                    <div
+                      key={index}
+                      className={message.type === "user" ? "user-message" : "chatbot-message"}
+                      style={{
+                        textAlign: message.type === "user" ? "right" : "left",
+                        margin: "5px 0",
+                      }}
+                    >
+                      <strong>
+                        {message.type === "user" ? (
+                          <button
+                            className="left-resonse"
+                            style={{
+                              backgroundColor: projectData.color,
+                              color: "",
+                            }}
+                          >
+                            {capitalizeFirstLetter(message.text)}
+                          </button>
+                        ) : message.component ? (
+                          message.component
+                        ) : (
+                          <button
+                            className="left-resonse"
+                            style={{ color: "black !important" }}
+                          >
+                            <ReactMarkdown
+                                className="markdown-content"
+                                components={{
+                                  p: ({ children }) => <>{children}</>, // Remove the <p> tag default behavior
+                                }}
+                              >
+                                {cleanMarkdown(capitalizeFirstLetter(message.text))}
+                              </ReactMarkdown>
+                          </button>
+                        )}
+                      </strong>
+                    </div>
+                  ))}
 
-  {/* Conditional Buttons outside the loop */}
-  {showButtons && (
-    <div style={{ marginTop: "10px", textAlign: "center" }}>
-      <button
-        style={{
-          margin: "1px",
-          padding: "4px 20px",
-          backgroundColor: `${projectData.color}`,
-          border: "none",
-          borderRadius: "5px",
-          cursor: "pointer",
-        }}
-        onClick={() => {
-          setShowButtons(false);
-          switchContactMode();
-        }}
-      >
-        Yes
-      </button>
-      <button
-        style={{
-          margin: "1px",
-          padding: "4px 20px",
-          backgroundColor: `${projectData.color}`,
-          border: "none",
-          borderRadius: "5px",
-          cursor: "pointer",
-        }}
-        onClick={() => {
-          setShowButtons(false);
-          setChatmode(true);
-          setContactmode(false);
-        }}
-      >
-        No
-      </button>
-    </div>
-  )}
-</div>
+                  {/* Conditional Buttons outside the loop */}
+                  {showButtons && (
+                    <div style={{ marginTop: "10px", textAlign: "center" }}>
+                      <button
+                        style={{
+                          margin: "1px",
+                          padding: "4px 20px",
+                          backgroundColor: `${projectData.color}`,
+                          border: "none",
+                          borderRadius: "5px",
+                          cursor: "pointer",
+                        }}
+                        onClick={() => {
+                          setShowButtons(false);
+                          switchContactMode();
+                        }}
+                      >
+                        Yes
+                      </button>
+                      <button
+                        style={{
+                          margin: "1px",
+                          padding: "4px 20px",
+                          backgroundColor: `${projectData.color}`,
+                          border: "none",
+                          borderRadius: "5px",
+                          cursor: "pointer",
+                        }}
+                        onClick={() => {
+                          setShowButtons(false);
+                          setChatmode(true);
+                          setContactmode(false);
+                        }}
+                      >
+                        No
+                      </button>
+                    </div>
+                  )}
+                </div>
 
 
                 <div className="chatbot-footer">
