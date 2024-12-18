@@ -203,8 +203,7 @@ const Chatbot = ({ url }) => {
 
   const toggleChatbot = () => {
     setShowChatbot((prev) => !prev);
-    setwelcomeshow(false)
-
+    setwelcomeshow(false);
   };
 
   const capitalizeFirstLetter = (string) => {
@@ -442,21 +441,17 @@ const Chatbot = ({ url }) => {
       setMessages([{ type: "chatbot", text: projectData.welcome_message }]);
     }
   }, [Chatmode, projectData]);
-  
-  
-  
-  const cleanMarkdown = (text) => {
-    return text.replace(/\n+/g, ' ').trim(); // Replace multiple newlines with a single space
-  }
-  
 
+  const cleanMarkdown = (text) => {
+    return text.replace(/\n+/g, " ").trim(); // Replace multiple newlines with a single space
+  };
 
   return (
     <>
       <Container className="" fluid style={{ backgroundColor: "transparent" }}>
         {projectData && (
           <Button
-            className="position-fixed"
+            className="position-fixed main-chatbot-button"
             style={{
               bottom: "25px",
               right: "20px",
@@ -466,6 +461,8 @@ const Chatbot = ({ url }) => {
               backgroundColor: `${projectData.toggle_color}`,
               border: "1px solid rgb(253, 248, 248)",
               fontFamily: "sans-serif",
+              boxShadow:"0 0 10px rgba(255, 255, 255, 0.91)",
+              transition:"all 0.2s ease-out"
             }}
             onClick={toggleChatbot}
           >
@@ -486,7 +483,6 @@ const Chatbot = ({ url }) => {
         {projectData &&
           (showChatbot ? (
             Chatmode ? (
-           
               <div
                 className="p-0"
                 style={{
@@ -505,6 +501,7 @@ const Chatbot = ({ url }) => {
                   transform: showChatbot ? "translateY(0)" : "translateY(20px)", // Slide in/out effect
                   transition: "opacity 0.5s ease, transform 0.5s ease", // Transition properties
                   margin: 0,
+                  border:"1px solid white",
                 }}
               >
                 <header
@@ -562,11 +559,19 @@ const Chatbot = ({ url }) => {
                   </Col>
                 </header>
 
-                <div className="chatbot-mid-scroll p-2" ref={chatBoxRef} style={{ backgroundColor: "rgb(231, 228, 228)" }}>
+                <div
+                  className="chatbot-mid-scroll p-2"
+                  ref={chatBoxRef}
+                  style={{ backgroundColor: "rgb(231, 228, 228)" }}
+                >
                   {messages.map((message, index) => (
                     <div
                       key={index}
-                      className={message.type === "user" ? "user-message" : "chatbot-message"}
+                      className={
+                        message.type === "user"
+                          ? "user-message"
+                          : "chatbot-message"
+                      }
                       style={{
                         textAlign: message.type === "user" ? "right" : "left",
                         margin: "5px 0",
@@ -591,13 +596,15 @@ const Chatbot = ({ url }) => {
                             style={{ color: "black !important" }}
                           >
                             <ReactMarkdown
-                                className="markdown-content"
-                                components={{
-                                  p: ({ children }) => <>{children}</>, // Remove the <p> tag default behavior
-                                }}
-                              >
-                                {cleanMarkdown(capitalizeFirstLetter(message.text))}
-                              </ReactMarkdown>
+                              className="markdown-content"
+                              components={{
+                                p: ({ children }) => <>{children}</>, // Remove the <p> tag default behavior
+                              }}
+                            >
+                              {cleanMarkdown(
+                                capitalizeFirstLetter(message.text)
+                              )}
+                            </ReactMarkdown>
                           </button>
                         )}
                       </strong>
@@ -644,35 +651,42 @@ const Chatbot = ({ url }) => {
                   )}
                 </div>
 
-
                 <div className="chatbot-footer">
                   <InputGroup className="pt-2 ps-2 pe-2">
                     <Form.Control
+                      as={"textarea"}
                       placeholder=""
-                      as="textarea"
                       aria-describedby="basic-addon2"
                       value={userInput}
                       onChange={(e) => setUserInput(e.target.value)}
                       onKeyPress={(e) => {
-                        if (e.key === "Enter") handleSendMessage();
+                        if (e.key === "Enter") {
+                          handleSendMessage(); // Handle the "Enter" key action
+                          e.target.blur(); // Remove focus from the input field
+                        }
                       }}
                       className="chatbot-text-input"
                       style={{
                         minHeight: "50px",
+                        maxHeight: "150px",
                         outline: "none",
-                        boxShadow: "0 0 5px transparent",
+                        overflowY: "hidden",
+                        boxShadow: "0px 4px 0px rgba(143, 143, 143, 0.25)",
                         borderTop: "1px solid rgb(112, 111, 111)",
                         borderBottom: "1px solid rgb(112, 111, 111)",
                         borderLeft: "1px solid rgb(112, 111, 111)",
                         borderRight: "1px solid transparent",
                         paddingTop: "16px",
+                        paddingBottom: "3px",
                         backgroundColor: "transparent",
                         lineHeight: "16px",
-                        paddingBottom: "3px !important",
                         resize: "none",
                         color: "rgb(31, 30, 30)",
+                        whiteSpace: "pre-wrap",
+                        overflowWrap: "break-word",
                       }}
                     />
+
                     <InputGroup.Text
                       id="basic-addon2"
                       onClick={handleSendMessage}
@@ -681,11 +695,15 @@ const Chatbot = ({ url }) => {
                         borderTop: "1px solid rgb(112, 111, 111)",
                         borderRight: "1px solid rgb(112, 111, 111)",
                         borderBottom: "1px solid rgb(112, 111, 111)",
+                        boxShadow: "0px 4px 0px rgba(143, 143, 143, 0.25)",
+
                         borderLeft: "none",
                         backgroundColor: "transparent",
                       }}
                     >
+                      {userInput.trim() && ( 
                       <i className="fa-solid fa-paper-plane text-black"></i>
+                      )}
                     </InputGroup.Text>
                   </InputGroup>
 
@@ -733,17 +751,19 @@ const Chatbot = ({ url }) => {
                   transform: showChatbot ? "translateY(0)" : "translateY(20px)", // Slide in/out effect
                   transition: "opacity 0.5s ease, transform 0.5s ease", // Transition properties
                   margin: 0,
+                  border:"1px solid white",
+
                 }}
               >
                 <header
-                  className="chatbot-1st-header d-flex "
-                  style={{ backgroundColor: `${projectData.color}` }}
+                  className=" d-flex "
+                  style={{ backgroundColor: `${projectData.color}`,height:"75px" }}
                 >
                   <Col
                     style={{ margin: 0, padding: 0, flex: "0 0 15%" }}
-                    className="pt-2"
+                    className=""
                   >
-                    <h3 className="mt-2 ms-4" onClick={switchChatMode}>
+                    <h3 className=" ms-4" onClick={switchChatMode} style={{paddingTop:"22px"}}>
                       <i
                         className="fa-solid fa-arrow-right"
                         style={{
@@ -763,8 +783,8 @@ const Chatbot = ({ url }) => {
                     }}
                   >
                     <h2
-                      className="pt-3 ps-4"
-                      style={{ fontWeight: "bold", fontSize: "25px" }}
+                      className=" ps-4"
+                      style={{ fontWeight: "bold", fontSize: "25px",paddingTop:"22px" }}
                     >
                       {capitalizeFirstLetter(projectData.chatbot_name)}
                     </h2>
@@ -777,9 +797,9 @@ const Chatbot = ({ url }) => {
                     <i
                       className="fa-solid fa-phone "
                       style={{
-                        paddingTop: "25px",
+                        paddingTop: "26px",
                         fontSize: "23px",
-                        transform: "rotate(180deg)",
+                        // transform: "rotate(180deg)",
                         marginLeft: "30px",
                       }}
                     ></i>
@@ -901,6 +921,7 @@ const Chatbot = ({ url }) => {
                         // paddingTop: "12px",
                         backgroundColor: "rgb(231, 228, 228)",
                         // lineHeight: "11px",
+                        boxShadow: "0px 4px 0px rgba(143, 143, 143, 0.25)",
                         // paddingBottom: "5px !important",
                         resize: "none",
                       }}
@@ -911,11 +932,14 @@ const Chatbot = ({ url }) => {
                       className="chatbot-send-buttom no-resize"
                       style={{
                         border: "1px solid black",
+                        boxShadow: "0px 4px 0px rgba(143, 143, 143, 0.25)",
                         borderLeft: "none",
                         backgroundColor: "rgb(231, 228, 228)",
                       }}
                     >
+                      {contactInput.trim() && ( 
                       <i className="fa-solid fa-paper-plane text-black"></i>
+                      )}
                     </InputGroup.Text>
                   </InputGroup>
 
@@ -980,7 +1004,7 @@ const Chatbot = ({ url }) => {
                   style={{
                     right: "4px",
                     top: "0px",
-                    fontSize: "15px",
+                    fontSize: "20px",
                     position: "fixed",
                     color: "gray",
                   }}

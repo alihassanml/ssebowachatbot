@@ -9,6 +9,7 @@
 
 html, body, #root {
     background-color: transparent !important;
+    /* background-color: rgb(17, 29, 49); */
 }
 
 .chatbot-logo-image {
@@ -111,4 +112,7 @@ html, body, #root {
 .markdown-content {
   color: black;
   font-size: 14px;
+}
+.main-chatbot-button:hover{
+  transform: scale(1.09);
 }
