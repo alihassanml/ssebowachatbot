@@ -637,9 +637,9 @@ const Chatbot = ({ url }) => {
                     style={{ margin: 0, padding: 0, flex: "0 0 15%" }}
                     className="d-flex"
                   >
-                    <h3 className="mt-2" onClick={toggleChatbot}>
+                    <h3 className="mt-1 ms-4" onClick={toggleChatbot}>
                       <i
-                        className="fa-solid fa-minus"
+                        className="fa-solid fa-xmark"
                         style={{ cursor: "pointer" }}
                       ></i>
                     </h3>
@@ -783,13 +783,13 @@ const Chatbot = ({ url }) => {
                         borderRight: "1px solid rgb(112, 111, 111)",
                         borderBottom: "1px solid rgb(112, 111, 111)",
                         boxShadow: "0px 4px 0px rgba(143, 143, 143, 0.25)",
-
+                        color:`${projectData.color}`,
                         borderLeft: "none",
                         backgroundColor: "transparent",
                       }}
                     >
                       {userInput.trim() && ( 
-                      <i className="fa-solid fa-paper-plane text-black"></i>
+                      <i className="fa-solid fa-paper-plane " style={{color:`${projectData.color}`}}></i>
                       )}
                     </InputGroup.Text>
                   </InputGroup>
@@ -1023,7 +1023,7 @@ const Chatbot = ({ url }) => {
                       }}
                     >
                       {contactInput.trim() && ( 
-                      <i className="fa-solid fa-paper-plane text-black"></i>
+                      <i className="fa-solid fa-paper-plane "  style={{color:`${projectData.color}`}}></i>
                       )}
                     </InputGroup.Text>
                   </InputGroup>
