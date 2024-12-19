@@ -8,8 +8,8 @@
 
 
 html, body, #root {
-    /* background-color: transparent !important; */
-    background-color: rgb(17, 29, 49);
+    background-color: transparent !important;
+    /* background-color: rgb(17, 29, 49); */
 }
 
 .chatbot-logo-image {
