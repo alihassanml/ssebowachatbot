@@ -177,6 +177,7 @@ const Chatbot = ({ url }) => {
                   style={{ textAlign: "left", marginTop: "10px" }}
                   className="left-resonse "
                 >
+                  {!userData.email ? (
                   <button
                     style={{
                       fontSize: "14px",
@@ -187,9 +188,23 @@ const Chatbot = ({ url }) => {
                       textAlign:"left"
                     }}
                   >
-                    Would you like to talk to our customer
-                    support center?
+                    Would you like to talk to our customer support center?
                   </button>
+                  ) : (
+                    <button
+                    style={{
+                      fontSize: "14px",
+                      color: "black",
+                      fontWeight: "lighter",
+                      border:"none",
+                      backgroundColor:"transparent",
+                      textAlign:"left"
+                    }}
+                  >
+                    Would you like to like to talk again with our customer support center?
+                  </button>
+
+                  )}
                 </div>
               </>
             ),
