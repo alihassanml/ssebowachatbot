@@ -133,3 +133,19 @@ html, body, #root {
 .index-module_type__E-SaG::after {
   content: unset !important;
 }
+b, strong{
+  color: black;
+}
+.left-response{
+  border-radius: 8px;
+    border-bottom-right-radius: 0px;
+    min-width: 70px;
+    max-width: 310px;
+    min-height: 37px;
+    padding: 10px;
+    font-size: 14px;
+    border: none;
+    color: rgb(255, 255, 255) ;
+    text-align: start;
+    background-color: rgb(253, 248, 248);
+}

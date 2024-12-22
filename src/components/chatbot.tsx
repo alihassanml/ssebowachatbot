@@ -142,62 +142,65 @@ const Chatbot = ({ url }) => {
     if (userInput.trim()) {
       setUserInput("");
     }
+    
+     // Show "typing..." message
+  setMessages((prev) => [...prev, { type: "chatbot", text: "typing..." }]);
 
-    try {
-      // Send user input to chatbot API
-      const response = await axios.post(
-        "https://api.kontactly.ai/chat",
-        qs.stringify({
-          question: userInput,
-          vector_name: url,
-        }),
-        {
-          headers: {
-            "Content-Type": "application/x-www-form-urlencoded",
-            Accept: "application/json",
-          },
-        }
-      );
+  try {
+    // Send user input to chatbot API
+    const response = await axios.post(
+      "https://api.kontactly.ai/chat",
+      qs.stringify({
+        question: userInput,
+        vector_name: url,
+      }),
+      {
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+          Accept: "application/json",
+        },
+      }
+    );
 
-      const answer = response.data.answer;
+    const answer = response.data.answer;
 
+    // Remove the "typing..." message and show the response
+    setMessages((prev) => {
+      const updatedMessages = [...prev];
+      updatedMessages.pop(); 
       if (
-        response.data.answer.toLowerCase().includes("false") ||
-        response.data.answer.toLowerCase().includes("sorry")
+        answer.toLowerCase().includes("false") ||
+        answer.toLowerCase().includes("sorry")
       ) {
         setShowButtons(true);
-
-        setMessages((prev) => [
-          ...prev,
-          {
-            type: "chatbot",
-            component: (
-              <>
-                <div
-                  style={{ textAlign: "left", marginTop: "10px" }}
-                  className="left-resonse "
-                >
-                  <button
-                    style={{
-                      fontSize: "14px",
-                      color: "black",
-                      fontWeight: "lighter",
-                      border:"none",
-                      backgroundColor:"transparent",
-                      textAlign:"left"
-                    }}
-                  >
-                    Would you like to talk to our customer support center?
-                  </button>
-                </div>
-              </>
-            ),
-          },
-        ]);
+        updatedMessages.push({
+          type: "chatbot",
+          component: (
+            <div
+              style={{ textAlign: "left", marginTop: "10px" }}
+              className="left-response"
+            >
+              <button
+                style={{
+                  fontSize: "14px",
+                  color: "black",
+                  fontWeight: "lighter",
+                  border: "none",
+                  backgroundColor: "transparent",
+                  textAlign: "left",
+                }}
+              >
+                Would you like to talk to our customer support center?
+              </button>
+            </div>
+          ),
+        });
       } else {
         setShowButtons(false);
-        setMessages((prev) => [...prev, { type: "chatbot", text: answer }]);
+        updatedMessages.push({ type: "chatbot", text: answer });
       }
+      return updatedMessages;
+    });
     } catch (error) {
       console.error(
         "Error sending message to chatbot:",
