@@ -187,7 +187,7 @@ const Chatbot = ({ url }) => {
                       textAlign:"left"
                     }}
                   >
-                    Something went wrong. Would you like to talk to our customer
+                    Would you like to talk to our customer
                     support center?
                   </button>
                 </div>
@@ -345,6 +345,7 @@ const Chatbot = ({ url }) => {
       if (data.Message === "yes") {
         if (!activeStatusUser) { // Only update state if not already active
           setActiveStatusUser(true);
+          fetchMessage(admin,user)
           setContactmessages([
             {
               type: "system",
@@ -352,7 +353,7 @@ const Chatbot = ({ url }) => {
             },
           ]);
           clearFetchingInterval(); 
-          fetchMessage(admin,user)
+          checkActiveStatus()
         }
       } else {
         console.log("No active connection.");
@@ -471,7 +472,7 @@ const Chatbot = ({ url }) => {
           { type: "user", text: contactInput },
           {
             type: "system",
-            text: "Thank you! Your Notification was sent successfully. Please wait for admin approval.",
+            text: "Please hold for a moment while we connect you with our customer support team.",
           },
         ]);
       }
@@ -834,7 +835,7 @@ const Chatbot = ({ url }) => {
                   borderRadius: "10px",
                   boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
                   padding: "20px",
-                  overflowY: "auto",
+                  overflowY: "hidden",
                   opacity: showChatbot ? 1 : 0, // Fade-in/fade-out effect
                   transform: showChatbot ? "translateY(0)" : "translateY(20px)", // Slide in/out effect
                   transition: "opacity 0.5s ease, transform 0.5s ease", // Transition properties
@@ -899,6 +900,7 @@ const Chatbot = ({ url }) => {
                 <div
                   className=" chatbot-mid-scroll p-2"
                   ref={chatContainerRef}
+                  style={{minHeight:"53vh"}}
                   
                 >
                   {contactmessages.map((message, index) => (
@@ -982,7 +984,7 @@ const Chatbot = ({ url }) => {
                     position: "fixed",
                     width: "100%",
                     maxHeight: "70px",
-                    minHeight: "80px",
+                    minHeight: "70px",
                     backgroundColor: "rgb(231, 228, 228)",
                   }}
                 >
