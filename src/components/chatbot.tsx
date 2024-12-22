@@ -177,7 +177,6 @@ const Chatbot = ({ url }) => {
                   style={{ textAlign: "left", marginTop: "10px" }}
                   className="left-resonse "
                 >
-                  {!userData.email ? (
                   <button
                     style={{
                       fontSize: "14px",
@@ -190,21 +189,6 @@ const Chatbot = ({ url }) => {
                   >
                     Would you like to talk to our customer support center?
                   </button>
-                  ) : (
-                    <button
-                    style={{
-                      fontSize: "14px",
-                      color: "black",
-                      fontWeight: "lighter",
-                      border:"none",
-                      backgroundColor:"transparent",
-                      textAlign:"left"
-                    }}
-                  >
-                    Would you like to like to talk again with our customer support center?
-                  </button>
-
-                  )}
                 </div>
               </>
             ),
@@ -513,6 +497,34 @@ const Chatbot = ({ url }) => {
   const switchChatMode = () => {
     setChatmode(true);
     setContactmode(false);
+    setShowButtons(true);
+    setMessages((prev) => [
+      ...prev,
+      {
+        type: "chatbot",
+        component: (
+          <>
+            <div
+              style={{ textAlign: "left", marginTop: "10px" }}
+              className="left-resonse "
+            >
+              <button
+                style={{
+                  fontSize: "14px",
+                  color: "black",
+                  fontWeight: "lighter",
+                  border:"none",
+                  backgroundColor:"transparent",
+                  textAlign:"left"
+                }}
+              >
+                Would you like to talk to again with  our customer support center?
+              </button>
+            </div>
+          </>
+        ),
+      },
+    ]);
   };
 
   const chatContainerRef = useRef(null); // Create a reference to the chat container
