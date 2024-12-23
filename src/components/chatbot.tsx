@@ -627,7 +627,7 @@ const Chatbot = ({ url }) => {
                 }}
               >
                 <header
-                  className="chatbot-1st-header d-flex "
+                  className="chatbot-1st-header d-flex text-white"
                   style={{
                     backgroundColor: `${projectData.color}`,
                     border: "1px solid `${projectData.color}`",
@@ -848,6 +848,7 @@ const Chatbot = ({ url }) => {
                         href="https://kontactly.ai/"
                         target="__blank"
                         className="text-black"
+                       
                       >
                         kontactly.ai
                       </a>
@@ -1083,6 +1084,7 @@ const Chatbot = ({ url }) => {
                         href="https://kontactly.ai/"
                         target="__blank"
                         className="text-black"
+                        
                       >
                         kontactly.ai
                       </a>
