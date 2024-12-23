@@ -731,11 +731,11 @@ const Chatbot = ({ url }) => {
 
                   {/* Conditional Buttons outside the loop */}
                   {showButtons && (
-                    <div style={{ marginTop: "10px", textAlign: "center" }}>
+                    <div style={{ marginTop: "10px", marginLeft:'25%' }}>
                       <button
                         style={{
                           margin: "1px",
-                          padding: "4px 20px",
+                          padding: "3px 20px",
                           backgroundColor: `${projectData.color}`,
                           border: "none",
                           borderRadius: "5px",
@@ -751,7 +751,7 @@ const Chatbot = ({ url }) => {
                       <button
                         style={{
                           margin: "1px",
-                          padding: "4px 20px",
+                          padding: "3px 20px",
                           backgroundColor: `${projectData.color}`,
                           border: "none",
                           borderRadius: "5px",
