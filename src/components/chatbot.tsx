@@ -786,6 +786,9 @@ const Chatbot = ({ url }) => {
                         if (e.key === "Enter") {
                           handleSendMessage(); // Handle the "Enter" key action
                           e.target.blur(); // Remove focus from the input field
+                          setTimeout(() => {
+                            e.target.focus(); // Refocus the input field after 3 seconds
+                          }, 1000);
                         }
                       }}
                       className="chatbot-text-input"
