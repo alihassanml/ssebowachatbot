@@ -562,6 +562,10 @@ const Chatbot = ({ url }) => {
 
 
  
+  function formatMessage(message) {
+    return message.replace(/\\(.?)\\*/g, '<strong>$1</strong>');
+}
+
 
   return (
     <>
@@ -655,12 +659,12 @@ const Chatbot = ({ url }) => {
                     className="pt-3"
                   >
                     <h1
-                      className="mt-2"
+                      className="mt-2 text-white"
                       style={{ fontSize: "25px", fontWeight: "bold" }}
                     >
                       {capitalizeFirstLetter(projectData.chatbot_name)}
                     </h1>
-                    <h6 style={{ fontSize: "15px" }}>
+                    <h6 style={{ fontSize: "15px" }} className="text-white">
                       {capitalizeFirstLetter(projectData.description)}
                     </h6>
                   </Col>
@@ -719,9 +723,8 @@ const Chatbot = ({ url }) => {
                                 p: ({ children }) => <>{children}</>, 
                               }}
                             >
-                              {cleanMarkdown(
-                                capitalizeFirstLetter(message.text)
-                              )}
+                                {capitalizeFirstLetter(formatMessage(message.text))}
+                              
                             </ReactMarkdown>
                           </button>
                         )}
@@ -739,6 +742,7 @@ const Chatbot = ({ url }) => {
                           backgroundColor: `${projectData.color}`,
                           border: "none",
                           borderRadius: "5px",
+                          color:"white",
                           cursor: "pointer",
                         }}
                         onClick={() => {
@@ -756,6 +760,7 @@ const Chatbot = ({ url }) => {
                           border: "none",
                           borderRadius: "5px",
                           cursor: "pointer",
+                          color:"white",
                         }}
                         onClick={() => {
                           setShowButtons(false);
@@ -875,7 +880,7 @@ const Chatbot = ({ url }) => {
                 }}
               >
                 <header
-                  className=" d-flex "
+                  className=" d-flex text-white"
                   style={{ backgroundColor: `${projectData.color}`,height:"75px" }}
                 >
                   <Col
