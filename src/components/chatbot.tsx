@@ -837,8 +837,8 @@ const Chatbot = ({ url }) => {
                         alt=""
                         className=""
                         style={{
-                          width: "18px",
-                          height: "18px",
+                          width: "17px",
+                          height: "17px",
                           borderRadius: "50%",
                           marginRight: "5px",
                         }}
@@ -1073,8 +1073,8 @@ const Chatbot = ({ url }) => {
                         alt=""
                         className=""
                         style={{
-                          width: "18px",
-                          height: "18px",
+                          width: "17px",
+                          height: "17px",
                           borderRadius: "50%",
                           marginRight: "5px",
                         }}
