@@ -9,6 +9,12 @@ import { Button, Image, Row, Col } from "react-bootstrap";
 import InputGroup from "react-bootstrap/InputGroup";
 import Form from "react-bootstrap/Form";
 import { TypeAnimation } from "react-type-animation";
+import AgoraRTC, { IAgoraRTCClient, ILocalAudioTrack } from "agora-rtc-sdk-ng";
+
+const APP_ID = "554cdf7520d14dd589dbdb5866482e93"; // Replace with your App ID
+const BACKEND_URL = "http://127.0.0.1:8000"; // Replace with your FastAPI backend URL
+
+const client: IAgoraRTCClient = AgoraRTC.createClient({ mode: "rtc", codec: "vp8" });
 
 const Chatbot = ({ url }) => {
   const [projectData, setProjectData] = useState(null);
@@ -22,9 +28,13 @@ const Chatbot = ({ url }) => {
 
   const [Contactmode, setContactmode] = useState(false);
   const [Chatmode, setChatmode] = useState(true);
+  const [Callmode, setCallmode] = useState(false);
+
   const [adminEmail, setAdminEmail] = useState("");
+  const [channelName, setChannelName] = useState("");
   const [currentPrompt, setCurrentPrompt] = useState("name");
   const [userrole, setuserrole] = useState("user");
+
 
   const [userData, setUserData] = useState(() => {
     const storedData = JSON.parse(localStorage.getItem("userData"));
@@ -63,6 +73,7 @@ const Chatbot = ({ url }) => {
         setProjectData(response.data);
         console.log(response.data);
         setAdminEmail(response.data.email);
+        setChannelName(response.data.email)
       } else {
         console.error("Failed to fetch project data:", response);
       }
@@ -142,65 +153,65 @@ const Chatbot = ({ url }) => {
     if (userInput.trim()) {
       setUserInput("");
     }
-    
-     // Show "typing..." message
-  setMessages((prev) => [...prev, { type: "chatbot", text: "typing..." }]);
 
-  try {
-    // Send user input to chatbot API
-    const response = await axios.post(
-      "https://api.kontactly.ai/chat",
-      qs.stringify({
-        question: userInput,
-        vector_name: url,
-      }),
-      {
-        headers: {
-          "Content-Type": "application/x-www-form-urlencoded",
-          Accept: "application/json",
-        },
-      }
-    );
+    // Show "typing..." message
+    setMessages((prev) => [...prev, { type: "chatbot", text: "typing..." }]);
 
-    const answer = response.data.answer;
+    try {
+      // Send user input to chatbot API
+      const response = await axios.post(
+        "https://api.kontactly.ai/chat",
+        qs.stringify({
+          question: userInput,
+          vector_name: url,
+        }),
+        {
+          headers: {
+            "Content-Type": "application/x-www-form-urlencoded",
+            Accept: "application/json",
+          },
+        }
+      );
 
-    // Remove the "typing..." message and show the response
-    setMessages((prev) => {
-      const updatedMessages = [...prev];
-      updatedMessages.pop(); 
-      if (
-        answer.toLowerCase().includes("false") ||
-        answer.toLowerCase().includes("sorry")
-      ) {
-        setShowButtons(true);
-        updatedMessages.push({
-          type: "chatbot",
-          component: (
-            <div
-              style={{ textAlign: "left", marginTop: "10px" }}
-              className="left-response"
-            >
-              <button
-                style={{
-                  fontSize: "14px",
-                  color: "black",
-                  fontWeight: "lighter",
-                  border: "none",
-                  backgroundColor: "transparent",
-                  textAlign: "left",
-                }}
+      const answer = response.data.answer;
+
+      // Remove the "typing..." message and show the response
+      setMessages((prev) => {
+        const updatedMessages = [...prev];
+        updatedMessages.pop();
+        if (
+          answer.toLowerCase().includes("false") ||
+          answer.toLowerCase().includes("sorry")
+        ) {
+          setShowButtons(true);
+          updatedMessages.push({
+            type: "chatbot",
+            component: (
+              <div
+                style={{ textAlign: "left", marginTop: "10px" }}
+                className="left-response"
               >
-                Would you like to talk to our customer support center?
-              </button>
-            </div>
-          ),
-        });
-      } else {
-        setShowButtons(false);
-        updatedMessages.push({ type: "chatbot", text: answer });
-      }
-      return updatedMessages;
-    });
+                <button
+                  style={{
+                    fontSize: "14px",
+                    color: "black",
+                    fontWeight: "lighter",
+                    border: "none",
+                    backgroundColor: "transparent",
+                    textAlign: "left",
+                  }}
+                >
+                  Would you like to talk to our customer support center?
+                </button>
+              </div>
+            ),
+          });
+        } else {
+          setShowButtons(false);
+          updatedMessages.push({ type: "chatbot", text: answer });
+        }
+        return updatedMessages;
+      });
     } catch (error) {
       console.error(
         "Error sending message to chatbot:",
@@ -343,18 +354,18 @@ const Chatbot = ({ url }) => {
       }
       const data = await response.json();
       console.log("API Response-----:", data.Message);
-  
+
       if (data.Message === "yes") {
         if (!activeStatusUser) { // Only update state if not already active
           setActiveStatusUser(true);
-          fetchMessage(admin,user)
+          fetchMessage(admin, user)
           setContactmessages([
             {
               type: "system",
               text: "Connection active! You're now chatting with our support admin.",
             },
           ]);
-          clearFetchingInterval(); 
+          clearFetchingInterval();
           checkActiveStatus()
         }
       } else {
@@ -365,28 +376,28 @@ const Chatbot = ({ url }) => {
       setActiveStatusUser(false);
     }
   };
-  
+
   useEffect(() => {
     let interval;
-  
+
     const clearFetchingInterval = () => {
       if (interval) {
         clearInterval(interval);
         interval = null;
       }
     };
-  
-    if (adminEmail && userData.email ) {
+
+    if (adminEmail && userData.email) {
       interval = setInterval(() => {
         fetchliverequestaccept(adminEmail, userData.email);
       }, 2000);
     }
-  
-    return () => clearFetchingInterval(); 
+
+    return () => clearFetchingInterval();
   }, [adminEmail, userData.email, activeStatusUser, Contactmode]);
-  
-  
-  
+
+
+
 
 
 
@@ -516,9 +527,9 @@ const Chatbot = ({ url }) => {
                   fontSize: "14px",
                   color: "black",
                   fontWeight: "lighter",
-                  border:"none",
-                  backgroundColor:"transparent",
-                  textAlign:"left"
+                  border: "none",
+                  backgroundColor: "transparent",
+                  textAlign: "left"
                 }}
               >
                 Would you like to talk to again with  our customer support center?
@@ -561,10 +572,201 @@ const Chatbot = ({ url }) => {
 
 
 
- 
+
   function formatMessage(message) {
     return message.replace(/\\(.?)\\*/g, '<strong>$1</strong>');
-}
+  }
+
+  const handleChangeCallMode = () => {
+    setCallmode(true)
+    setContactmode(false)
+  }
+
+  const handleRevertCallMode = () => {
+    setCallmode(false)
+    setContactmode(true)
+  }
+
+
+
+
+
+
+  ///            Calling System 
+
+
+  const [inCall, setInCall] = useState(false);
+
+  const [token, setToken] = useState("");
+  const [localAudioTrack, setLocalAudioTrack] = useState<ILocalAudioTrack | null>(null);
+  const [callStatus, setCallStatus] = useState("Let's start meeting.");
+  const username = userData.name
+  const [userCount, setUserCount] = useState(null);
+  // setChannelName(adminEmail)
+
+
+
+  const handleCall = async () => {
+    setCallStatus('Please wait,connecting...')
+
+    if (!channelName) {
+      alert("Please enter a channel name.");
+      return;
+    }
+
+    try {
+      // Fetch token from backend
+      const response = await fetch(`${BACKEND_URL}/get-token?channel_name=${channelName}&username=${username}&role=user`);
+      const data = await response.json();
+
+
+      if (data.token) {
+        setToken(data.token);
+      } else if (data.message) {
+        if (data.message === "admin is busy") {
+          setCallStatus("The admin is currently busy on another call.")
+        }
+      }
+
+
+      // Join the Agora channel
+      await client.join(APP_ID, channelName, data.token);
+
+      // Create local audio track
+      const audioTrack = await AgoraRTC.createMicrophoneAudioTrack();
+      if (!audioTrack) {
+        console.error("Failed to create microphone audio track");
+        alert("Unable to access microphone. Please check your microphone settings.");
+        return;
+      }
+
+      setLocalAudioTrack(audioTrack);
+
+      // Publish audio track
+      await client.publish(audioTrack);
+      console.log("Audio track published successfully");
+
+      setInCall(true);
+      setCallStatus("Connected");
+    } catch (error) {
+      console.log("Failed to start the call:", error.message);
+    }
+  };
+
+  const handleLeave = async () => {
+
+    try {
+      const response = await fetch(`http://127.0.0.1:8000/clear-call-notification?username=${username}&channel_name=${channelName}&role=user`);
+      console.log(response.status);
+
+      // Stop and close the local audio track
+      if (localAudioTrack) {
+        localAudioTrack.stop();
+        localAudioTrack.close();
+      }
+
+      // Leave the Agora channel
+      await client.leave();
+
+      setLocalAudioTrack(null);
+      setInCall(false);
+    } catch (error) {
+      console.error("Failed to leave the call:", error);
+      alert("Failed to leave the call.");
+    }
+  };
+
+  // Subscribe to remote user's audio track
+  client.on("user-published", async (user, mediaType) => {
+    if (mediaType === "audio") {
+      await client.subscribe(user, "audio");
+      const remoteAudioTrack = user.audioTrack;
+      if (remoteAudioTrack) {
+        remoteAudioTrack.play();
+      }
+    }
+  });
+
+  // Check microphone access before joining
+  useEffect(() => {
+    if (Callmode) {
+      const checkMicrophonePermission = async () => {
+        try {
+          const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+          stream.getTracks().forEach((track) => track.stop()); // Stop the stream after testing
+        } catch (err) {
+          alert("Microphone access is required to join the call.");
+          setCallmode(false); // Disable Callmode if permission is denied
+        }
+      };
+
+      checkMicrophonePermission();
+    }
+  }, [Callmode]);
+
+
+
+  const [consistentCountDuration, setConsistentCountDuration] = useState(0); // Tracks how long the count has stayed 1
+  const [startConnecting, setStartConnecting] = useState(false); // Tracks how long the count has stayed 1
+
+  useEffect(() => {
+    const fetchUserCount = async () => {
+      if(startConnecting){
+      try {
+        const response = await fetch(
+          `http://127.0.0.1:8000/get-connected-users?channel_name=${channelName}`
+        );
+        if (!response.ok) {
+          throw new Error('Failed to fetch connected users');
+        }
+
+        const data = await response.json();
+
+        setUserCount(data); // Update the user count
+
+        // Check if user count is consistently 1
+        if (data.length === 1) {
+          setConsistentCountDuration((prev) => prev + 3); // Increment duration
+        } else {
+          setConsistentCountDuration(0); // Reset duration if count changes
+        } 
+        // If duration exceeds 5 minutes (300 seconds), handle action
+        if (consistentCountDuration >= 300) {
+          console.log('Consistent count detected for 5 minutes.');
+          setCallStatus("The admin is currently unavailable. The call has been automatically disconnected. Please try again later.");
+          handleLeave(); 
+        }
+      } 
+      catch (error) {
+        console.error('Error fetching user count:', error.message);
+      }
+    }
+    };
+
+    // Start the intervalconsistentCountDuration
+    const interval = setInterval(fetchUserCount, 3000);
+
+    // Cleanup the interval on unmount
+    return () => clearInterval(interval);
+  }, [channelName, consistentCountDuration,startConnecting]); // Dependencies
+
+
+
+
+  
+  const [isMicOn, setIsMicOn] = useState(true);
+
+  const toggleMic = () => {
+    if (localAudioTrack) {
+      if (isMicOn) {
+        localAudioTrack.setEnabled(false); // Mute the microphone
+      } else {
+        localAudioTrack.setEnabled(true); // Unmute the microphone
+      }
+      setIsMicOn(!isMicOn);
+    }
+  };
+
 
 
   return (
@@ -583,7 +785,7 @@ const Chatbot = ({ url }) => {
               border: "1px solid rgb(253, 248, 248)",
               fontFamily: "sans-serif",
               boxShadow: "0px 10px 8px rgba(255, 250, 250, 0.14)",
-              transition:"all 0.2s ease-out",
+              transition: "all 0.2s ease-out",
             }}
             onClick={toggleChatbot}
           >
@@ -623,7 +825,7 @@ const Chatbot = ({ url }) => {
                   transform: showChatbot ? "translateY(0)" : "translateY(20px)", // Slide in/out effect
                   transition: "opacity 0.5s ease, transform 0.5s ease", // Transition properties
                   margin: 0,
-                  border:"1px solid white",
+                  border: "1px solid white",
                 }}
               >
                 <header
@@ -684,7 +886,7 @@ const Chatbot = ({ url }) => {
                 <div
                   className="chatbot-mid-scroll p-2"
                   ref={chatBoxRef}
-                  style={{ backgroundColor: "rgb(231, 228, 228)" }}
+                  style={{ backgroundColor: "rgb(231, 228, 228)" }}startConnecting
                 >
                   {messages.map((message, index) => (
                     <div
@@ -720,11 +922,11 @@ const Chatbot = ({ url }) => {
                             <ReactMarkdown
                               className="markdown-content"
                               components={{
-                                p: ({ children }) => <>{children}</>, 
+                                p: ({ children }) => <>{children}</>,
                               }}
                             >
-                                {capitalizeFirstLetter(formatMessage(message.text))}
-                              
+                              {capitalizeFirstLetter(formatMessage(message.text))}
+
                             </ReactMarkdown>
                           </button>
                         )}
@@ -734,7 +936,7 @@ const Chatbot = ({ url }) => {
 
                   {/* Conditional Buttons outside the loop */}
                   {showButtons && (
-                    <div style={{ marginTop: "10px", marginLeft:'25%' }}>
+                    <div style={{ marginTop: "10px", marginLeft: '25%' }}>
                       <button
                         style={{
                           margin: "1px",
@@ -742,7 +944,7 @@ const Chatbot = ({ url }) => {
                           backgroundColor: `${projectData.color}`,
                           border: "none",
                           borderRadius: "5px",
-                          color:"white",
+                          color: "white",
                           cursor: "pointer",
                         }}
                         onClick={() => {
@@ -760,7 +962,7 @@ const Chatbot = ({ url }) => {
                           border: "none",
                           borderRadius: "5px",
                           cursor: "pointer",
-                          color:"white",
+                          color: "white",
                         }}
                         onClick={() => {
                           setShowButtons(false);
@@ -822,13 +1024,13 @@ const Chatbot = ({ url }) => {
                         borderRight: "1px solid rgb(112, 111, 111)",
                         borderBottom: "1px solid rgb(112, 111, 111)",
                         boxShadow: "0px 4px 0px rgba(143, 143, 143, 0.25)",
-                        color:`${projectData.color}`,
+                        color: `${projectData.color}`,
                         borderLeft: "none",
                         backgroundColor: "transparent",
                       }}
                     >
-                      {userInput.trim() && ( 
-                      <i className="fa-solid fa-paper-plane " style={{color:`${projectData.color}`}}></i>
+                      {userInput.trim() && (
+                        <i className="fa-solid fa-paper-plane " style={{ color: `${projectData.color}` }}></i>
                       )}
                     </InputGroup.Text>
                   </InputGroup>
@@ -851,7 +1053,7 @@ const Chatbot = ({ url }) => {
                         href="https://kontactly.ai/"
                         target="__blank"
                         className="text-black"
-                       
+
                       >
                         kontactly.ai
                       </a>
@@ -870,7 +1072,7 @@ const Chatbot = ({ url }) => {
                   minWidth: "400px",
                   maxWidth: "400px",
                   minHeight: "75vh",
-                  maxHeight:"75vh",
+                  maxHeight: "75vh",
                   borderRadius: "10px",
                   boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
                   padding: "20px",
@@ -879,19 +1081,20 @@ const Chatbot = ({ url }) => {
                   transform: showChatbot ? "translateY(0)" : "translateY(20px)", // Slide in/out effect
                   transition: "opacity 0.5s ease, transform 0.5s ease", // Transition properties
                   margin: 0,
-                  border:"1px solid white",
+                  border: "1px solid white",
 
                 }}
               >
                 <header
                   className=" d-flex text-white"
-                  style={{ backgroundColor: `${projectData.color}`,height:"75px" }}
+                  style={{ backgroundColor: `${projectData.color}`, height: "75px" }}
                 >
                   <Col
                     style={{ margin: 0, padding: 0, flex: "0 0 15%" }}
                     className=""
                   >
-                    <h3 className=" ms-4" onClick={switchChatMode} style={{paddingTop:"22px"}}>
+                    <h3 className=" ms-4" onClick={switchChatMode} style={{ paddingTop: "22px" }}>
+                      
                       <i
                         className="fa-solid fa-arrow-right"
                         style={{
@@ -912,7 +1115,7 @@ const Chatbot = ({ url }) => {
                   >
                     <h2
                       className=" ps-4"
-                      style={{ fontWeight: "bold", fontSize: "25px",paddingTop:"22px" }}
+                      style={{ fontWeight: "bold", fontSize: "25px", paddingTop: "22px" }}
                     >
                       {capitalizeFirstLetter(projectData.chatbot_name)}
                     </h2>
@@ -922,15 +1125,18 @@ const Chatbot = ({ url }) => {
                     style={{ margin: 0, padding: 0, flex: "0 0 15%" }}
                     className="d-flex"
                   >
-                    <i
-                      className="fa-solid fa-phone "
-                      style={{
-                        paddingTop: "26px",
-                        fontSize: "23px",
-                        // transform: "rotate(180deg)",
-                        marginLeft: "30px",
-                      }}
-                    ></i>
+                    {userData.name && (
+                      <i
+                        className="fa-solid fa-phone "
+                        onClick={handleChangeCallMode}
+                        style={{
+                          paddingTop: "26px",
+                          fontSize: "23px",
+                          cursor: "pointer",
+                          // transform: "rotate(180deg)",
+                          marginLeft: "30px",
+                        }}
+                      ></i>)}
                   </Col>
                 </header>
 
@@ -939,8 +1145,8 @@ const Chatbot = ({ url }) => {
                 <div
                   className=" chatbot-mid-scroll p-2"
                   ref={chatContainerRef}
-                  style={{minHeight:"53vh"}}
-                  
+                  style={{ minHeight: "53vh" }}
+
                 >
                   {contactmessages.map((message, index) => (
                     <div
@@ -1063,8 +1269,8 @@ const Chatbot = ({ url }) => {
                         backgroundColor: "rgb(231, 228, 228)",
                       }}
                     >
-                      {contactInput.trim() && ( 
-                      <i className="fa-solid fa-paper-plane "  style={{color:`${projectData.color}`}}></i>
+                      {contactInput.trim() && (
+                        <i className="fa-solid fa-paper-plane " style={{ color: `${projectData.color}` }}></i>
                       )}
                     </InputGroup.Text>
                   </InputGroup>
@@ -1087,7 +1293,7 @@ const Chatbot = ({ url }) => {
                         href="https://kontactly.ai/"
                         target="__blank"
                         className="text-black"
-                        
+
                       >
                         kontactly.ai
                       </a>
@@ -1095,8 +1301,262 @@ const Chatbot = ({ url }) => {
                   </center>
                 </div>
               </div>
+            ) : Callmode ? (
+              <div style={{
+                position: "fixed",
+                bottom: "75px",
+                right: "20px",
+                backgroundColor: "rgb(231, 228, 228)",
+                minWidth: "400px",
+                maxWidth: "400px",
+                minHeight: "75vh",
+                maxHeight: "75vh",
+                borderRadius: "10px",
+                boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
+                padding: "0px",
+                overflowY: "hidden",
+                opacity: showChatbot ? 1 : 0, // Fade-in/fade-out effect
+                transform: showChatbot ? "translateY(0)" : "translateY(20px)", // Slide in/out effect
+                transition: "opacity 0.5s ease, transform 0.5s ease", // Transition properties
+                margin: 0,
+                border: "1px solid white",
+
+              }}>
+                <header
+                  className=" d-flex text-white"
+                  style={{ backgroundColor: `${projectData.color}`, height: "100px" }}
+                >
+                  <Col
+                    style={{ margin: 0, padding: 0, flex: "0 0 15%" }}
+                    className=""
+                  >
+                    <h3 className=" ms-4" onClick={handleRevertCallMode} style={{ paddingTop: "34px" }}>
+                    {!inCall &&(
+                      <i
+                        className="fa-solid fa-arrow-right"
+                        style={{
+                          cursor: "pointer",
+                          transform: "rotate(180deg)",
+                        }}
+                      ></i>)}
+                    </h3>
+                  </Col>
+                  <Col
+                    style={{
+                      margin: 0,
+                      padding: "0",
+                      flex: "0 0 60%",
+                      textAlign: "center",
+                      alignItems: "center",
+                    }}
+                  >
+                    <h2
+                      className=" ps-4"
+                      style={{ fontWeight: "bold", fontSize: "25px", paddingTop: "34px" }}
+                    >
+                      {capitalizeFirstLetter(projectData.chatbot_name)}
+                    </h2>
+                  </Col>
+
+                  <Col
+                    style={{ margin: 0, padding: 0, flex: "0 0 15%" }}
+                    className="d-flex"
+                  >
+                    {/* <i
+                      className="fa-solid fa-phone "
+                      onClick={handleChangeCallMode}
+                      style={{
+                        paddingTop: "26px",
+                        fontSize: "23px",
+                        cursor:"pointer",
+                        // transform: "rotate(180deg)",
+                        marginLeft: "30px",
+                      }}
+                    ></i> */}
+                  </Col>
+                </header>
+
+                {/* <VoiceCall admin_email={adminEmail} handleRevertCallMode={handleRevertCallMode} /> */}
+                <>
+
+                  <>
+                   
+                  </>
+
+
+
+
+                  <div style={{ textAlign: "center", marginTop: "20px" }}>
+                  
+
+                    {!inCall ? (
+                      <>
+
+                        <center>
+                      <h4 style={{ fontSize: "28px", fontWeight: "bold" }} className="mt-5">
+                        {capitalizeFirstLetter(username)}
+                      </h4>
+                    </center>
+                    <center>
+                    <i className="fa-solid fa-user voice-call-image-2 m-1"></i>
+                    </center>
+                    <center>
+                      <p style={{ fontSize: "14px",paddingTop:"40px" }}>{callStatus} </p>
+                    </center>
+
+                       <ul style={{
+                        bottom:0,
+                        marginBottom:"75px",
+                        marginLeft:"33%",
+                        position:"fixed",
+                      }}>
+                        <button
+                        className="delete-call-button"
+                          onClick={() => {
+                            setStartConnecting(true);
+                            handleCall();
+                          }}
+
+                          style={{
+                            transition:"all 0.3s ease-out",
+                            height:"75px",
+                            width:"75px",
+                            backgroundColor: "green",
+                            color: "white",
+                            border: "none",
+                            borderRadius: "50%",
+                            cursor: "pointer",
+                          }}
+                        >
+                           <i
+                      className="fa-solid fa-phone "
+                      onClick={handleChangeCallMode}
+                      style={{
+                        fontSize: "23px",
+                        cursor:"pointer",
+                        // transform: "rotate(135deg)",
+                      }}
+                    ></i>
+                        </button>
+                        </ul>
+                      </>
+                    ) : (
+                      <>
+                    <br />
+                    <br />
+
+
+                  {userCount &&(
+                    <div className="d-flex justify-content-center align-items-center">
+                      {userCount.connected_users.map((user, index) => (
+                        <div key={index} className="m-2">
+                          <i className="fa-solid fa-user voice-call-image-2 m-1"></i>
+                          <br />
+                          <span>{capitalizeFirstLetter(user.username)}</span>
+                        </div>
+                      ))}
+                    </div>
+                    )}
+                        <center>
+                      <p style={{ fontSize: "14px",paddingTop:"40px" }}>{callStatus} </p>
+                    </center>
+                      <ul style={{
+                        bottom:0,
+                        marginBottom:"70px",
+                        marginLeft:"23%",
+                        position:"fixed",
+                      }}>
+                        <button
+                        className="delete-call-button"
+                        onClick={() => {
+                          handleLeave();
+                          setStartConnecting(false);
+                          setCallStatus("Call ended.");
+                        }}
+                        
+                          style={{
+                            transition:"all 0.3s ease-out",
+                            height:"75px",
+                            width:"75px",
+                            // marginTop: '50%',
+                            backgroundColor: "red",
+                            color: "white",
+                            border: "none",
+                            borderRadius: "50%",
+                            cursor: "pointer",
+                          }}
+                        >
+                       <i
+                      className="fa-solid fa-phone "
+                      onClick={handleChangeCallMode}
+                      style={{
+                        fontSize: "23px",
+                        cursor:"pointer",
+                        transform: "rotate(135deg)",
+                      }}
+                    ></i>
+                        </button>
+                        <button
+                        className="delete-call-button"
+
+                          onClick={toggleMic}
+                          style={{
+                            transition:"all 0.3s ease-out",
+
+                            height:"75px",
+                            width:"75px",
+                            backgroundColor: isMicOn ? "green" : "red",
+                            color: "white",
+                            border: "none",
+                            marginLeft:"10px",
+                            borderRadius: "50%",
+                            cursor: "pointer",
+                            fontSize:"18px",
+                            marginRight: "10px",
+                          }}
+                        >
+                          {isMicOn ? <i className="fa-solid fa-microphone"></i> : <i className="fa-solid fa-microphone-slash"></i>}
+                        </button>
+                        </ul>
+                       
+                      </>
+                    )}
+                    <p className="text-black pt-1" style={{ fontSize: "13px",   bottom:0,
+                          position:'fixed',marginLeft:"31%" }}>
+                    <center>
+
+                      <Image
+                        src="logo.png"
+                        alt=""
+                        className=""
+                        style={{
+                          width: "17px",
+                          height: "17px",
+                          borderRadius: "50%",
+                          marginRight: "5px",
+                        }}
+                      />
+                      Powerd by{" "}
+                      <a
+                        href="https://kontactly.ai/"
+                        target="__blank"
+                        className="text-black"
+
+                      >
+                        kontactly.ai
+                      </a>
+                  </center>
+
+                    </p>
+                  </div>
+
+                </>
+
+              </div>
             ) : (
-              <div>No mode enabled.</div>
+              <div>
+                No Mode Available
+              </div>
             )
           ) : welcomeshow ? (
             <div

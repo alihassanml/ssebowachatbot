@@ -150,3 +150,22 @@ b, strong{
     text-align: start;
     background-color: rgb(253, 248, 248);
 }
+.voice-call-image{
+  font-size: 50px;
+  margin-bottom: 20px;
+}
+.delete-call-button:hover{
+  transform: scale(1.05);
+}
+.voice-call-image-2 {
+  font-size: 50px;
+  margin-bottom: 20px;
+  height: 90px;
+  width: 90px;
+  text-align: center;
+  justify-content: center;
+  border-radius: 50%;
+  padding-top: 15px;
+  color: white;
+  background-color: rgb(100, 98, 98);
+}
