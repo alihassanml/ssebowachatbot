@@ -12,7 +12,7 @@ import { TypeAnimation } from "react-type-animation";
 import AgoraRTC, { IAgoraRTCClient, ILocalAudioTrack } from "agora-rtc-sdk-ng";
 
 const APP_ID = "554cdf7520d14dd589dbdb5866482e93"; // Replace with your App ID
-const BACKEND_URL = "http://127.0.0.1:8000"; // Replace with your FastAPI backend URL
+const BACKEND_URL = "https://api.kontactly.ai"; // Replace with your FastAPI backend URL
 
 const client: IAgoraRTCClient = AgoraRTC.createClient({ mode: "rtc", codec: "vp8" });
 
@@ -607,10 +607,10 @@ const Chatbot = ({ url }) => {
 
 
   const handleCall = async () => {
-    setCallStatus('Please wait,connecting...')
+    setCallStatus('Please wait while we establish the connection.')
 
     if (!channelName) {
-      alert("Please enter a channel name.");
+      console.error("Please enter a channel name.");
       return;
     }
 
@@ -656,7 +656,7 @@ const Chatbot = ({ url }) => {
   const handleLeave = async () => {
 
     try {
-      const response = await fetch(`http://127.0.0.1:8000/clear-call-notification?username=${username}&channel_name=${channelName}&role=user`);
+      const response = await fetch(`https://api.kontactly.ai/clear-call-notification?username=${username}&channel_name=${channelName}&role=user`);
       console.log(response.status);
 
       // Stop and close the local audio track
@@ -672,7 +672,7 @@ const Chatbot = ({ url }) => {
       setInCall(false);
     } catch (error) {
       console.error("Failed to leave the call:", error);
-      alert("Failed to leave the call.");
+      console.log("Failed to leave the call.");
     }
   };
 
@@ -714,7 +714,7 @@ const Chatbot = ({ url }) => {
       if(startConnecting){
       try {
         const response = await fetch(
-          `http://127.0.0.1:8000/get-connected-users?channel_name=${channelName}`
+          `https://api.kontactly.ai/get-connected-users?channel_name=${channelName}`
         );
         if (!response.ok) {
           throw new Error('Failed to fetch connected users');
@@ -731,7 +731,7 @@ const Chatbot = ({ url }) => {
           setConsistentCountDuration(0); // Reset duration if count changes
         } 
         // If duration exceeds 5 minutes (300 seconds), handle action
-        if (consistentCountDuration >= 300) {
+        if (consistentCountDuration >= 180) {
           console.log('Consistent count detected for 5 minutes.');
           setCallStatus("The admin is currently unavailable. The call has been automatically disconnected. Please try again later.");
           handleLeave(); 
@@ -1125,7 +1125,7 @@ const Chatbot = ({ url }) => {
                     style={{ margin: 0, padding: 0, flex: "0 0 15%" }}
                     className="d-flex"
                   >
-                    {userData.name && (
+                    {userData.message && (
                       <i
                         className="fa-solid fa-phone "
                         onClick={handleChangeCallMode}
@@ -1393,13 +1393,14 @@ const Chatbot = ({ url }) => {
                       <>
 
                         <center>
-                      <h4 style={{ fontSize: "28px", fontWeight: "bold" }} className="mt-5">
-                        {capitalizeFirstLetter(username)}
-                      </h4>
+                      
                     </center>
                     <center>
-                    <i className="fa-solid fa-user voice-call-image-2 m-1"></i>
+                    <i className="fa-solid fa-user voice-call-image-2 mt-5"></i>
                     </center>
+                    <h4 style={{ fontSize: "28px", fontWeight: "bold" }} className="">
+                        {capitalizeFirstLetter(username)}
+                      </h4>
                     <center>
                       <p style={{ fontSize: "14px",paddingTop:"40px" }}>{callStatus} </p>
                     </center>
@@ -1471,7 +1472,7 @@ const Chatbot = ({ url }) => {
                         onClick={() => {
                           handleLeave();
                           setStartConnecting(false);
-                          setCallStatus("Call ended.");
+                          setCallStatus("The call has ended. Thank you for connecting.");
                         }}
                         
                           style={{
